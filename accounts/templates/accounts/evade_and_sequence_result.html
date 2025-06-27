@@ -1,0 +1,694 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evade & Sequence - Result</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #a259ff;
+            --text-color: #ffffff;
+            --text-color-muted: #e0e7ff;
+            --container-bg-color: rgba(0, 0, 0, 0.3);
+            --border-color: rgba(162, 89, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6d28d9 0%, #38b6ff 100%);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .circle-bg.left {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            z-index: -1;
+            width: 340px;
+            height: 340px;
+            left: -120px;
+            top: 40px;
+        }
+
+        .circle-bg.right {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            z-index: -1;
+            width: 420px;
+            height: 420px;
+            right: -160px;
+            top: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(162, 89, 255, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(162, 89, 255, 0.3);
+            box-shadow: 
+                0 0 40px rgba(162, 89, 255, 0.2),
+                0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        .result-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 0;
+            text-shadow: 0 0 20px var(--primary-color);
+            background: linear-gradient(45deg, var(--primary-color), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .result-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-color-muted);
+            margin: 0.5rem 0 0 0;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header-decoration {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), #8b5cf6);
+            margin: 1.5rem auto 0;
+            border-radius: 2px;
+            animation: expand 1s ease-out 0.5s both;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: center;
+            margin: 3rem 0;
+            gap: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(162, 89, 255, 0.3);
+        }
+
+        .primary-stat {
+            background: linear-gradient(135deg, rgba(162, 89, 255, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 2px solid var(--primary-color);
+            flex: 2;
+            animation-delay: 0.2s;
+        }
+
+        .secondary-stat {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(162, 89, 255, 0.1) 100%);
+            border: 1px solid rgba(162, 89, 255, 0.3);
+            flex: 1;
+            animation-delay: 0.4s;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        .stat-value {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 15px var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-color-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        .stat-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(162, 89, 255, 0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            animation: glowPulse 3s infinite;
+        }
+
+        .performance-analysis {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(162, 89, 255, 0.05) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(162, 89, 255, 0.2);
+            position: relative;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .analysis-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-header h3 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .analysis-icon {
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        .performance-analysis h4 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .performance-analysis p {
+            margin: 0 0 1.5rem 0;
+            color: var(--text-color-muted);
+            line-height: 1.8;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .performance-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(45deg, var(--primary-color), #8b5cf6);
+            color: white;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 auto;
+            display: block;
+            width: fit-content;
+            animation: badgeGlow 2s infinite;
+        }
+
+        .performance-excellent h4 {
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .performance-great h4 {
+            color: #3b82f6;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .performance-good h4 {
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .performance-improving h4 {
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.8s both;
+        }
+
+        .button {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 140px;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .primary-button {
+            background: linear-gradient(45deg, var(--primary-color), #8b5cf6);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
+        }
+
+        .primary-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(162, 89, 255, 0.6);
+        }
+
+        .secondary-button {
+            background: rgba(162, 89, 255, 0.1);
+            color: var(--text-color);
+            border: 1px solid rgba(162, 89, 255, 0.3);
+        }
+
+        .secondary-button:hover {
+            background: rgba(162, 89, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.3);
+        }
+
+        .button-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px var(--primary-color); }
+            to { text-shadow: 0 0 30px var(--primary-color), 0 0 40px var(--primary-color); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes expand {
+            from { width: 0; }
+            to { width: 60px; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(162, 89, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(162, 89, 255, 0.8); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .result-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .result-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .result-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 3rem;
+            }
+
+            .result-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .result-container {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+
+            .result-header h1 {
+                font-size: 2rem;
+            }
+
+            .result-header h2 {
+                font-size: 1.2rem;
+            }
+
+            .header-icon {
+                font-size: 2.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+            }
+
+            .performance-analysis {
+                padding: 1.5rem;
+                margin: 2rem 0;
+            }
+
+            .performance-analysis h4 {
+                font-size: 1.3rem;
+            }
+
+            .performance-analysis p {
+                font-size: 1rem;
+            }
+
+            .button {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+                min-width: 120px;
+            }
+
+            .circle-bg.left {
+                width: 200px;
+                height: 200px;
+                left: -80px;
+                top: 20px;
+            }
+
+            .circle-bg.right {
+                width: 250px;
+                height: 250px;
+                right: -100px;
+                top: 15px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .result-container {
+                padding: 1rem;
+            }
+
+            .result-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stat-value {
+                font-size: 2.2rem;
+            }
+
+            .button {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Landscape orientation for mobile */
+        @media (orientation: landscape) and (max-height: 500px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .result-container {
+                margin: 0.5rem;
+                padding: 1.5rem;
+            }
+
+            .result-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .result-header h1 {
+                font-size: 2rem;
+            }
+
+            .result-stats {
+                margin: 1.5rem 0;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .performance-analysis {
+                margin: 1.5rem 0;
+                padding: 1rem;
+            }
+
+            .result-actions {
+                margin-top: 1.5rem;
+                gap: 1rem;
+            }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .stat-card:hover {
+                transform: none;
+            }
+
+            .button:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="circle-bg left"></div>
+    <div class="circle-bg right"></div>
+
+    <div class="container">
+        <div class="result-container">
+            <div class="result-header">
+                <div class="header-icon">🎮</div>
+                <h1>Evade & Sequence</h1>
+                <h2>Game Result</h2>
+                <div class="header-decoration"></div>
+            </div>
+
+            <div class="result-stats">
+                <div class="stat-card primary-stat">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value">{{ result.score }}</div>
+                    <div class="stat-label">Final Score</div>
+                    <div class="stat-glow"></div>
+                </div>
+                
+                <div class="stat-card secondary-stat">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-value">{{ result.misses }}</div>
+                    <div class="stat-label">Misses</div>
+                </div>
+                
+                <div class="stat-card secondary-stat">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value">{{ result.timestamp|date:"M d" }}</div>
+                    <div class="stat-label">{{ result.timestamp|date:"Y" }}</div>
+                </div>
+            </div>
+
+            <div class="performance-analysis">
+                <div class="analysis-header">
+                    <h3>Performance Analysis</h3>
+                    <div class="analysis-icon">
+                        {% if result.score >= 500 %}
+                            🏆
+                        {% elif result.score >= 300 %}
+                            🎯
+                        {% elif result.score >= 150 %}
+                            👍
+                        {% else %}
+                            💪
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if result.score >= 500 %}
+                    <div class="performance-excellent">
+                        <h4>Outstanding Performance!</h4>
+                        <p>You've mastered the art of evasion and sequence! Your reflexes and focus are exceptional. This level of performance puts you among the elite players.</p>
+                        <div class="performance-badge">Elite</div>
+                    </div>
+                {% elif result.score >= 300 %}
+                    <div class="performance-great">
+                        <h4>Great Job!</h4>
+                        <p>Excellent work! You've shown strong skills in both evasion and number sequencing. You're well on your way to mastering this challenge.</p>
+                        <div class="performance-badge">Advanced</div>
+                    </div>
+                {% elif result.score >= 150 %}
+                    <div class="performance-good">
+                        <h4>Good Performance</h4>
+                        <p>Solid effort! Keep practicing to improve your evasion timing and sequence accuracy. Every game brings you closer to excellence.</p>
+                        <div class="performance-badge">Intermediate</div>
+                    </div>
+                {% else %}
+                    <div class="performance-improving">
+                        <h4>Keep Improving</h4>
+                        <p>Every game makes you better! Focus on timing your evades and maintaining concentration on the sequence. Your potential is limitless.</p>
+                        <div class="performance-badge">Beginner</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="result-actions">
+                <a href="{% url 'evade_and_sequence' %}" class="button primary-button">
+                    <span class="button-icon">🎮</span>
+                    Play Again
+                </a>
+                <a href="{% url 'dashboard' %}" class="button secondary-button">
+                    <span class="button-icon">🏠</span>
+                    Dashboard
+                </a>
+                <a href="{% url 'leaderboard' %}" class="button secondary-button">
+                    <span class="button-icon">🏆</span>
+                    Leaderboard
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,1264 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | ReactionTest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #a259ff;
+            --secondary-color: #38b6ff;
+            --accent-color: #ff6b6b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #e0e7ff;
+            --text-muted: #a7b3d9;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+            --shadow-glow: 0 0 20px rgba(162, 89, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6d28d9 0%, #38b6ff 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2.5rem 1.2rem 2.5rem;
+            background: transparent;
+        }
+
+        .nav-left {
+            font-weight: 700;
+            font-size: 1.35rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .nav-left:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 2.2rem;
+        }
+
+        .nav-link {
+            color: #e0e7ff;
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: color 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+        }
+
+        .nav-link.active, .nav-left.active {
+            border-bottom: 2.5px solid #a259ff;
+        }
+
+        /* Main Container */
+        .leaderboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Header */
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .leaderboard-header h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #a259ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .leaderboard-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Game Tabs */
+        .game-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .game-tab {
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .game-tab:hover::before {
+            left: 100%;
+        }
+
+        .game-tab:hover {
+            background: rgba(162, 89, 255, 0.2);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+        }
+
+        .game-tab.active {
+            background: var(--primary-color);
+            color: var(--text-primary);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Time Filter */
+        .time-filter {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .time-filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .time-filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .time-filter-btn:hover::before {
+            left: 100%;
+        }
+
+        .time-filter-btn:hover {
+            background: rgba(56, 182, 255, 0.2);
+            border-color: var(--secondary-color);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .time-filter-btn.active {
+            background: var(--secondary-color);
+            color: var(--text-primary);
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
+        /* Progress Section */
+        .progress-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .progress-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .progress-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .progress-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .progress-card:hover {
+            transform: translateY(-4px);
+            background: rgba(162, 89, 255, 0.1);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .progress-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-card h3 i {
+            color: var(--primary-color);
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .progress-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .progress-improvement {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .progress-improvement.improved {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .progress-improvement.declined {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .progress-improvement.no-data {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .progress-improvement i {
+            margin-right: 0.5rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-4px);
+            background: rgba(162, 89, 255, 0.1);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* Top 3 Podium */
+        .top-ranks {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 4rem;
+            align-items: flex-end;
+        }
+
+        .rank-card {
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            min-width: 200px;
+        }
+
+        .rank-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(162, 89, 255, 0.1) 0%, rgba(56, 182, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .rank-card:hover::before {
+            opacity: 1;
+        }
+
+        .rank-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+        }
+
+        .rank-card.rank-1 {
+            transform: scale(1.1);
+            border-color: #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+        }
+
+        .rank-card.rank-2 {
+            border-color: #C0C0C0;
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.1) 0%, rgba(192, 192, 192, 0.05) 100%);
+        }
+
+        .rank-card.rank-3 {
+            border-color: #CD7F32;
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, rgba(205, 127, 50, 0.05) 100%);
+        }
+
+        .rank-badge {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rank-card.rank-1 .rank-badge { 
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .rank-card.rank-2 .rank-badge { 
+            color: #C0C0C0;
+            text-shadow: 0 0 20px rgba(192, 192, 192, 0.5);
+        }
+        .rank-card.rank-3 .rank-badge { 
+            color: #CD7F32;
+            text-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
+        }
+
+        .rank-info h2 {
+            margin: 0.5rem 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .rank-info p { 
+            color: var(--text-muted); 
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rank-info .time {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 1rem;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Leaderboard Table */
+        .leaderboard-table {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .leaderboard-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 1.5rem 2rem;
+            text-align: left;
+        }
+
+        .leaderboard-table thead {
+            background: rgba(162, 89, 255, 0.1);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .leaderboard-table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 2rem;
+        }
+
+        .leaderboard-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tbody tr:hover {
+            background-color: rgba(162, 89, 255, 0.05);
+            transform: scale(1.01);
+        }
+
+        .current-user-row {
+            background: linear-gradient(135deg, rgba(162, 89, 255, 0.15) 0%, rgba(56, 182, 255, 0.15) 100%) !important;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: inset 0 0 20px rgba(162, 89, 255, 0.1);
+        }
+
+        .current-user-row td:first-child {
+            font-weight: 700;
+        }
+
+        .player-info { 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .player-name { 
+            font-weight: 600; 
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .player-username { 
+            font-size: 0.9rem; 
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Game Content */
+        .game-content {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .game-content.active {
+            display: block;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav {
+                padding: 1rem 2rem;
+            }
+            
+            .nav-right {
+                gap: 1.5rem;
+            }
+
+            .leaderboard-container {
+                padding: 2rem 1rem;
+            }
+
+            .leaderboard-header h1 {
+                font-size: 3rem;
+            }
+
+            .top-ranks { 
+                flex-direction: column; 
+                gap: 1.5rem; 
+                align-items: center; 
+            }
+
+            .rank-card {
+                min-width: 250px;
+            }
+
+            .stats-bar { 
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .game-tabs { 
+                flex-direction: column; 
+                align-items: center; 
+                gap: 1rem;
+            }
+
+            .leaderboard-table {
+                overflow-x: auto;
+            }
+
+            .leaderboard-table th, 
+            .leaderboard-table td {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-right {
+                gap: 1rem;
+            }
+
+            .leaderboard-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .rank-card {
+                min-width: 200px;
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .nav, .time-filters, .controls-container { display: none !important; }
+            body { background: white !important; color: black !important; }
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .nav-right {
+                flex-wrap: wrap;
+                gap: 1rem;
+                justify-content: center;
+            }
+            
+            .nav-link {
+                font-size: 1rem;
+                padding: 0.75rem 1rem;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .leaderboard-container {
+                padding: 1rem;
+            }
+            
+            .leaderboard-header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .leaderboard-header p {
+                font-size: 1rem;
+            }
+            
+            .game-tabs {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .game-tab {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+            
+            .time-filters {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: stretch;
+            }
+            
+            .time-filter-btn {
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+                min-height: 44px;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .stat-item {
+                padding: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .stat-label {
+                font-size: 0.9rem;
+            }
+            
+            .top-ranks {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .rank-card {
+                flex-direction: row;
+                padding: 1rem;
+            }
+            
+            .rank-badge {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .rank-info h2 {
+                font-size: 1.25rem;
+            }
+            
+            .rank-info .time {
+                font-size: 1.5rem;
+            }
+            
+            /* Responsive table */
+            .leaderboard-table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 12px;
+            }
+            
+            .leaderboard-table table {
+                min-width: 500px;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .player-info {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .player-name {
+                font-size: 0.9rem;
+            }
+            
+            .player-username {
+                font-size: 0.8rem;
+            }
+            
+            /* Progress section */
+            .progress-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .progress-card {
+                padding: 1rem;
+            }
+            
+            .progress-value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Tablet styles */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .leaderboard-container {
+                padding: 2rem;
+            }
+            
+            .leaderboard-header h1 {
+                font-size: 3.5rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.5rem;
+            }
+            
+            .top-ranks {
+                gap: 1.5rem;
+            }
+            
+            .rank-card {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-link,
+            .game-tab,
+            .time-filter-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .nav-link:hover,
+            .game-tab:hover,
+            .time-filter-btn:hover {
+                transform: none;
+            }
+            
+            .stat-item:hover,
+            .rank-card:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="{% url 'dashboard' %}" class="nav-left">
+            <span style="font-size:1.3rem;">⚡</span> ReactionTest
+        </a>
+        <div class="nav-right">
+            <a href="{% url 'dashboard' %}" class="nav-link">
+                 Home
+            </a>
+            <a href="{% url 'leaderboard' %}" class="nav-link active">Leaderboard</a>
+            <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+            <a href="{% url 'admin_dashboard' %}" class="nav-link">Admin Dashboard</a>
+        </div>
+    </nav>
+    
+    <div class="leaderboard-container">
+        <header class="leaderboard-header">
+            <h1>Global Leaderboard</h1>
+            <p>See how you stack up against the best players in the world.</p>
+        </header>
+
+        <!-- Game Tabs -->
+        <div class="game-tabs">
+            <div class="game-tab active" data-game="reaction-test">
+                <i class="fas fa-bolt"></i> Reaction Test
+            </div>
+            <div class="game-tab" data-game="evade-sequence">
+                <i class="fas fa-crosshairs"></i> Evade & Sequence
+            </div>
+        </div>
+
+        <!-- Time Filter -->
+        <div class="time-filter">
+            <a href="{% url 'leaderboard' %}?time=day" class="time-filter-btn {% if time_filter == 'day' %}active{% endif %}">
+                <i class="fas fa-calendar-day"></i> Day
+            </a>
+            <a href="{% url 'leaderboard' %}?time=week" class="time-filter-btn {% if time_filter == 'week' %}active{% endif %}">
+                <i class="fas fa-calendar-week"></i> Week
+            </a>
+            <a href="{% url 'leaderboard' %}?time=all" class="time-filter-btn {% if time_filter == 'all' %}active{% endif %}">
+                <i class="fas fa-infinity"></i> All Time
+            </a>
+        </div>
+
+        <!-- Progress Section -->
+        {% if user_progress %}
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>Your Progress This Week</h2>
+                <p>Compare your performance with last week</p>
+            </div>
+            <div class="progress-grid">
+                <!-- Reaction Test Progress -->
+                <div class="progress-card">
+                    <h3><i class="fas fa-bolt"></i> Reaction Test</h3>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat-label">This Week</div>
+                            <div class="progress-stat-value">{{ user_progress.reaction.current_week_best|default:"N/A" }} ms</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-label">Last Week</div>
+                            <div class="progress-stat-value">{{ user_progress.reaction.previous_week_best|default:"N/A" }} ms</div>
+                        </div>
+                    </div>
+                    <div class="progress-improvement {% if user_progress.reaction.is_improved == True %}improved{% elif user_progress.reaction.is_improved == False %}declined{% else %}no-data{% endif %}">
+                        {% if user_progress.reaction.improvement_ms is not None %}
+                            {% if user_progress.reaction.is_improved %}
+                                <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.reaction.improvement_ms }}ms ({{ user_progress.reaction.improvement_percent }}%)
+                            {% else %}
+                                <i class="fas fa-arrow-down"></i> Slower by {{ user_progress.reaction.improvement_ms_abs }}ms ({{ user_progress.reaction.improvement_percent_abs }}%)
+                            {% endif %}
+                        {% else %}
+                            <i class="fas fa-minus"></i> No data available
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Evade & Sequence Progress -->
+                <div class="progress-card">
+                    <h3><i class="fas fa-crosshairs"></i> Evade & Sequence</h3>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat-label">This Week</div>
+                            <div class="progress-stat-value">{{ user_progress.evade.current_week_best|default:"N/A" }}</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-label">Last Week</div>
+                            <div class="progress-stat-value">{{ user_progress.evade.previous_week_best|default:"N/A" }}</div>
+                        </div>
+                    </div>
+                    <div class="progress-improvement {% if user_progress.evade.is_improved == True %}improved{% elif user_progress.evade.is_improved == False %}declined{% else %}no-data{% endif %}">
+                        {% if user_progress.evade.improvement_points is not None %}
+                            {% if user_progress.evade.is_improved %}
+                                <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.evade.improvement_points }} points ({{ user_progress.evade.improvement_percent }}%)
+                            {% else %}
+                                <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.evade.improvement_points_abs }} points ({{ user_progress.evade.improvement_percent_abs }}%)
+                            {% endif %}
+                        {% else %}
+                            <i class="fas fa-minus"></i> No data available
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Reaction Test Content -->
+        <div class="game-content active" id="reaction-test-content">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value">{{ reaction_test_stats.current_user_rank|ordinal|default:"N/A" }}</span>
+                    <span class="stat-label">Your Rank</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ reaction_test_stats.your_best|default:"N/A" }} ms</span>
+                    <span class="stat-label">Your Best</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ reaction_test_stats.total_players|intcomma }}</span>
+                    <span class="stat-label">Total Players</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ reaction_test_stats.average_time|floatformat:0 }} ms</span>
+                    <span class="stat-label">Global Average</span>
+                </div>
+            </div>
+
+            <div class="leaderboard-content">
+                <div class="top-ranks">
+                    {% for player in reaction_test_leaderboard.top3 %}
+                    <div class="rank-card rank-{{ player.rank }}">
+                        <div class="rank-badge">
+                            {% if player.rank == 1 %}
+                                <i class="fas fa-trophy"></i>
+                            {% elif player.rank == 2 %}
+                                <i class="fas fa-medal"></i>
+                            {% else %}
+                                <i class="fas fa-award"></i>
+                            {% endif %}
+                        </div>
+                        <div class="rank-info">
+                            <h2>{{ player.name }}</h2>
+                            <p>@{{ player.username }}</p>
+                            <div class="time">{{ player.best_time }} ms</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="leaderboard-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Best Time (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in reaction_test_leaderboard.full %}
+                            <tr class="{% if player.user_id == user_id %}current-user-row{% endif %}">
+                                <td>{{ player.rank }}</td>
+                                <td>
+                                    <div class="player-info">
+                                        <span class="player-name">{{ player.name }}</span>
+                                        <span class="player-username">@{{ player.username }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ player.best_time }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evade & Sequence Content -->
+        <div class="game-content" id="evade-sequence-content">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value">{{ evade_sequence_stats.current_user_rank|ordinal|default:"N/A" }}</span>
+                    <span class="stat-label">Your Rank</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ evade_sequence_stats.your_best|default:"N/A" }}</span>
+                    <span class="stat-label">Your Best</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ evade_sequence_stats.total_players|intcomma }}</span>
+                    <span class="stat-label">Total Players</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ evade_sequence_stats.average_score|floatformat:0 }}</span>
+                    <span class="stat-label">Global Average</span>
+                </div>
+            </div>
+
+            <div class="leaderboard-content">
+                <div class="top-ranks">
+                    {% for player in evade_sequence_leaderboard.top3 %}
+                    <div class="rank-card rank-{{ player.rank }}">
+                        <div class="rank-badge">
+                            {% if player.rank == 1 %}
+                                <i class="fas fa-trophy"></i>
+                            {% elif player.rank == 2 %}
+                                <i class="fas fa-medal"></i>
+                            {% else %}
+                                <i class="fas fa-award"></i>
+                            {% endif %}
+                        </div>
+                        <div class="rank-info">
+                            <h2>{{ player.name }}</h2>
+                            <p>@{{ player.username }}</p>
+                            <div class="time">{{ player.best_score }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="leaderboard-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Best Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in evade_sequence_leaderboard.full %}
+                            <tr class="{% if player.user_id == user_id %}current-user-row{% endif %}">
+                                <td>{{ player.rank }}</td>
+                                <td>
+                                    <div class="player-info">
+                                        <span class="player-name">{{ player.name }}</span>
+                                        <span class="player-username">@{{ player.username }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ player.best_score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced tab switching functionality with animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.game-tab');
+            const contents = document.querySelectorAll('.game-content');
+            const timeFilterBtns = document.querySelectorAll('.time-filter-btn');
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const gameType = this.dataset.game;
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => {
+                        c.classList.remove('active');
+                        c.style.opacity = '0';
+                        c.style.transform = 'translateY(20px)';
+                    });
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    const targetContent = document.getElementById(gameType + '-content');
+                    targetContent.classList.add('active');
+                    
+                    // Animate content appearance
+                    setTimeout(() => {
+                        targetContent.style.opacity = '1';
+                        targetContent.style.transform = 'translateY(0)';
+                    }, 100);
+                });
+            });
+
+            // Time filter button handling
+            timeFilterBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    // Get current active game tab
+                    const activeTab = document.querySelector('.game-tab.active');
+                    const currentGame = activeTab ? activeTab.dataset.game : 'reaction-test';
+                    
+                    // Update URL to include both time filter and game tab
+                    const url = new URL(this.href);
+                    url.searchParams.set('game', currentGame);
+                    this.href = url.toString();
+                });
+            });
+
+            // Restore game tab from URL parameter on page load
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameParam = urlParams.get('game');
+            if (gameParam) {
+                const targetTab = document.querySelector(`[data-game="${gameParam}"]`);
+                if (targetTab) {
+                    // Remove active from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => {
+                        c.classList.remove('active');
+                        c.style.opacity = '0';
+                        c.style.transform = 'translateY(20px)';
+                    });
+                    
+                    // Activate target tab and content
+                    targetTab.classList.add('active');
+                    const targetContent = document.getElementById(gameParam + '-content');
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                        setTimeout(() => {
+                            targetContent.style.opacity = '1';
+                            targetContent.style.transform = 'translateY(0)';
+                        }, 100);
+                    }
+                }
+            }
+
+            // Add hover effects to stat items
+            const statItems = document.querySelectorAll('.stat-item');
+            statItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Add pulse animation to current user row
+            const currentUserRow = document.querySelector('.current-user-row');
+            if (currentUserRow) {
+                // Removed pulsing animation - it was too distracting
+            }
+        });
+    </script>
+</body>
+</html> 

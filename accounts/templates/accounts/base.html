@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ReactionTest{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/professional_dark_theme.css' %}">
+    <style>
+        :root {
+            --primary-color: #a259ff;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6d28d9 0%, #38b6ff 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2.5rem;
+            background: transparent;
+        }
+        .nav-left {
+            font-weight: 700;
+            font-size: 1.35rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-left:hover {
+            color: var(--primary-color);
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .nav-link {
+            color: #e0e7ff;
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 1.05rem;
+            padding: 0.2rem 0;
+            border-bottom: 2.5px solid transparent;
+            transition: color 0.18s, border-color 0.18s;
+        }
+        .nav-link:hover {
+            color: #fff;
+            border-bottom: 2.5px solid var(--primary-color);
+        }
+        .nav-link.active {
+            border-bottom: 2.5px solid var(--primary-color);
+            color: #fff;
+        }
+        @media (max-width: 700px) {
+            .nav {
+                /* flex-direction: column; */
+                /* align-items: flex-start; */
+                padding: 1rem 1rem;
+            }
+            .nav-right {
+                gap: 2.5rem;
+                padding: 0px;
+                
+            }
+        }
+        @media (max-width: 600px) {
+            .circle-bg.left,
+            .circle-bg.right {
+                display: none !important;
+            }
+        }
+        </style>
+    {% block style %}{% endblock %}
+</head>
+<body>
+    <div class="circle-bg left" style="position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); z-index: -1; width: 340px; height: 340px; left: -120px; top: 40px;"></div>
+    <div class="circle-bg right" style="position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); z-index: -1; width: 420px; height: 420px; right: -160px; top: 30px;"></div>
+
+    <nav class="nav">
+        <a href="{% url 'dashboard' %}" class="nav-left">
+            <span style="font-size:1.3rem;">⚡</span> ReactionTest
+        </a>
+        <div class="nav-right">
+            <a href="{% url 'dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">Home</a>
+            <a href="{% url 'leaderboard' %}" class="nav-link{% if request.resolver_match.url_name == 'leaderboard' %} active{% endif %}">Leaderboard</a>
+            <a href="{% url 'profile' %}" class="nav-link{% if request.resolver_match.url_name == 'profile' %} active{% endif %}">Profile</a>
+            {% if request.user.is_staff %}
+            <a href="{% url 'admin_dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'admin_dashboard' %} active{% endif %}">Admin Dashboard</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

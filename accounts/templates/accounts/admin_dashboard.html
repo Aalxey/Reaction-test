@@ -1,0 +1,513 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% block title %}Admin Dashboard | ReactionTest{% endblock %}
+
+{% block style %}
+<style>
+    html, body {
+        max-width: 100vw;
+        overflow-x: hidden !important;
+    }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .admin-container {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        color: #e0e7ff;
+    }
+    .admin-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    .admin-header h1 {
+        font-size: 2.75rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -1px;
+    }
+    .admin-header p {
+        font-size: 1.1rem;
+        color: #a7b3d9;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    .stat-card {
+        background: rgba(30, 41, 59, 0.5);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .stat-icon {
+        font-size: 2rem;
+        color: #a7b3d9;
+    }
+    .stat-info .value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #fff;
+    }
+    .stat-info .label {
+        font-size: 0.8rem;
+        color: #a7b3d9;
+        text-transform: uppercase;
+    }
+    .user-table-container {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    .table-header {
+        padding: 0 1rem 1rem 1rem;
+    }
+    .table-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #fff;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        color: #a7b3d9;
+    }
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+    tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+    .user-info-cell {
+        display: flex;
+        flex-direction: column;
+    }
+    .user-name {
+        font-weight: 600;
+        color: #fff;
+    }
+    .user-username {
+        font-size: 0.9rem;
+        color: #a7b3d9;
+    }
+    .status-badge, .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-active { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .status-inactive { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .role-admin { background-color: rgba(255, 215, 0, 0.2); color: #FFD700; }
+    .role-user { background-color: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .action-btn, .action-btn-danger {
+        text-decoration: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+    .action-btn {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+    }
+    .action-btn:hover { background-color: rgba(59, 130, 246, 0.4); }
+    .action-btn-danger {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    .action-btn-danger:hover { background-color: rgba(239, 68, 68, 0.4); }
+    .pagination {
+        padding: 1.5rem 1rem 0.5rem 1rem;
+        text-align: center;
+        color: #a7b3d9;
+    }
+    .pagination a {
+        color: #fff;
+        text-decoration: none;
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
+        margin: 0 0.2rem;
+        transition: background-color 0.2s;
+    }
+    .pagination a:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    .pagination .current {
+        font-weight: 600;
+    }
+    
+    /* Real-time status indicator */
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.online {
+        background-color: #22c55e;
+    }
+    
+    .status-indicator.offline {
+        background-color: #ef4444;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+        [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
+            display: none !important;
+        }
+        html, body {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <header class="admin-header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage users, view site statistics, and monitor activity.</p>
+        <div style="text-align: center; margin-top: 1rem;">
+            <span class="status-indicator online"></span>
+            <span style="color: #a7b3d9; font-size: 0.9rem;">Real-time updates active</span>
+            <button onclick="testOnlineStatus()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; cursor: pointer;">Test Status</button>
+        </div>
+    </header>
+
+    <!-- Nav Bar (copied from leaderboard.html) -->
+    <nav class="nav">
+      <a href="{% url 'dashboard' %}" class="nav-left{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
+        <i class="fas fa-bolt"></i> ReactionTest
+      </a>
+      <div class="nav-right">
+        <a href="{% url 'dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
+          <i class="fas fa-home"></i> Home
+        </a>
+        <a href="{% url 'leaderboard' %}" class="nav-link{% if request.resolver_match.url_name == 'leaderboard' %} active{% endif %}">
+          <i class="fas fa-trophy"></i> Leaderboard
+        </a>
+        <a href="{% url 'profile' %}" class="nav-link{% if request.resolver_match.url_name == 'profile' %} active{% endif %}">
+          <i class="fas fa-user"></i> Profile
+        </a>
+        {% if user.is_staff %}
+        <a href="{% url 'admin_dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'admin_dashboard' %} active{% endif %}">
+          <i class="fas fa-tools"></i> Admin
+        </a>
+        {% endif %}
+        <a href="{% url 'logout' %}" class="nav-link">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </nav>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <div class="value">{{ stats.total_users|intcomma }}</div>
+                <div class="label">Total Users</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+            <div class="stat-info">
+                <div class="value">{{ stats.active_users|intcomma }}</div>
+                <div class="label">Online Users</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="stat-info">
+                <div class="value">{{ stats.admins|intcomma }}</div>
+                <div class="label">Administrators</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-slash"></i></div>
+            <div class="stat-info">
+                <div class="value">{{ stats.banned_users|intcomma }}</div>
+                <div class="label">Offline Users</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="user-table-container">
+        <div class="table-header">
+            <h2>All Users</h2>
+            <!-- Add search/filter controls here if needed -->
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Joined Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr data-user-id="{{ u.id }}">
+                    <td>
+                        <div class="user-info-cell">
+                            <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
+                            <span class="user-username">@{{ u.username }}</span>
+                        </div>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.useronlinestatus.is_online %}
+                            <span class="status-badge status-active">Online</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">Offline</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_staff %}
+                            <span class="role-badge role-admin">Admin</span>
+                        {% else %}
+                            <span class="role-badge role-user">User</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_joined|date:"F d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'view_profile' u.id %}" class="action-btn">View Profile</a>
+                        <a href="{% url 'edit_user' u.id %}" class="action-btn">Edit</a>
+                        <a href="{% url 'delete_user' u.id %}" class="action-btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="pagination">
+            <span class="step-links">
+                {% if users.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ users.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ users.number }} of {{ users.paginator.num_pages }}.
+                </span>
+
+                {% if users.has_next %}
+                    <a href="?page={{ users.next_page_number }}">next</a>
+                    <a href="?page={{ users.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time online status updates
+let updateInterval;
+let isUpdating = false;
+let consecutiveErrors = 0;
+const MAX_CONSECUTIVE_ERRORS = 3;
+
+function updateOnlineStatus() {
+    if (isUpdating) return; // Prevent multiple simultaneous requests
+    
+    isUpdating = true;
+    
+    fetch('{% url "get_online_status_api" %}')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Reset error counter on success
+                consecutiveErrors = 0;
+                
+                // Update user status badges
+                data.users.forEach(userStatus => {
+                    const userRow = document.querySelector(`tr[data-user-id="${userStatus.user_id}"]`);
+                    if (userRow) {
+                        const statusCell = userRow.querySelector('.status-badge');
+                        if (statusCell) {
+                            const isOnline = userStatus.is_online;
+                            const newText = isOnline ? 'Online' : 'Offline';
+                            const newClass = isOnline ? 'status-badge status-active' : 'status-badge status-inactive';
+                            
+                            // Only update if changed
+                            if (statusCell.textContent !== newText) {
+                                statusCell.textContent = newText;
+                                statusCell.className = newClass;
+                            }
+                        }
+                    }
+                });
+                
+                // Update stats display
+                updateStatsDisplay(data);
+                
+                // Update status indicator to show success
+                const indicator = document.querySelector('.status-indicator');
+                if (indicator) {
+                    indicator.className = 'status-indicator online';
+                }
+                
+                console.log('Online status updated:', data.timestamp);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating online status:', error);
+            consecutiveErrors++;
+            
+            // Show error indicator after multiple consecutive errors
+            if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                const indicator = document.querySelector('.status-indicator');
+                if (indicator) {
+                    indicator.className = 'status-indicator offline';
+                }
+                
+                // Update status text
+                const statusText = document.querySelector('.status-indicator + span');
+                if (statusText) {
+                    statusText.textContent = 'Connection issues - retrying...';
+                }
+            }
+        })
+        .finally(() => {
+            isUpdating = false;
+        });
+}
+
+function updateStatsDisplay(data) {
+    // Count online/offline users
+    const onlineCount = data.users.filter(u => u.is_online).length;
+    const offlineCount = data.users.length - onlineCount;
+    
+    // Update stats cards if they exist
+    const activeUsersCard = document.querySelector('.stat-card:nth-child(2) .value');
+    const offlineUsersCard = document.querySelector('.stat-card:nth-child(4) .value');
+    
+    if (activeUsersCard) {
+        activeUsersCard.textContent = onlineCount.toLocaleString();
+    }
+    if (offlineUsersCard) {
+        offlineUsersCard.textContent = offlineCount.toLocaleString();
+    }
+}
+
+// Start real-time updates
+function startRealTimeUpdates() {
+    // Initial update
+    updateOnlineStatus();
+    
+    // Update every 15 seconds (reduced from 30 seconds for more responsiveness)
+    updateInterval = setInterval(updateOnlineStatus, 15000);
+}
+
+// Stop real-time updates
+function stopRealTimeUpdates() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+    }
+}
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopRealTimeUpdates();
+        console.log('Page hidden - stopped real-time updates');
+    } else {
+        startRealTimeUpdates();
+        console.log('Page visible - started real-time updates');
+    }
+});
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Starting real-time updates...');
+    startRealTimeUpdates();
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+    stopRealTimeUpdates();
+});
+
+// Add heartbeat to keep connection alive
+setInterval(function() {
+    if (!document.hidden && !isUpdating) {
+        // Send a lightweight ping to keep the connection active
+        fetch('{% url "get_online_status_api" %}', { method: 'HEAD' })
+            .catch(error => console.log('Heartbeat ping failed:', error));
+    }
+}, 60000); // Every minute
+
+// Test function for debugging
+function testOnlineStatus() {
+    console.log('Testing online status...');
+    
+    // Test the debug endpoint
+    fetch('{% url "debug_online_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Debug data:', data);
+            alert(`Debug Info:\nTotal Users: ${data.total_users}\nOnline: ${data.online_users}\nOffline: ${data.offline_users}\nCache Status: ${JSON.stringify(data.cache_status)}`);
+        })
+        .catch(error => {
+            console.error('Debug test failed:', error);
+            alert('Debug test failed: ' + error.message);
+        });
+    
+    // Also test the regular endpoint
+    updateOnlineStatus();
+}
+</script>
+{% endblock %} 

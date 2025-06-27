@@ -1,0 +1,195 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% block title %}Reaction Test Result{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #6d28d9 0%, #38b6ff 100%);
+    }
+    .result-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        color: white;
+        padding: 2rem;
+        animation: fadeIn 1.2s cubic-bezier(.39,.575,.56,1) both;
+    }
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(40px); }
+        100% { opacity: 1; transform: none; }
+    }
+    .result-summary {
+        background: rgba(255, 255, 255, 0.22);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        border-radius: 24px;
+        padding: 2.5rem 2rem 2rem 2rem;
+        margin-bottom: 2.5rem;
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+        overflow: hidden;
+    }
+    .confetti {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        animation: pop 0.7s cubic-bezier(.39,.575,.56,1);
+    }
+    @keyframes pop {
+        0% { transform: scale(0.7); opacity: 0; }
+        80% { transform: scale(1.15); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+    .summary-title {
+        font-size: 2.7rem;
+        font-weight: bold;
+        color: #ffe066;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.01em;
+    }
+    .summary-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        color: #e0e7ff;
+    }
+    .performance-comment {
+        font-size: 1.1rem;
+        font-style: italic;
+        color: #fff;
+        margin: -1rem 0 1.5rem 0;
+        max-width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .progress-bar-bg {
+        width: 100%;
+        height: 18px;
+        background: rgba(255,255,255,0.13);
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 2px 8px 0 #6d28d933;
+    }
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #ffe066 0%, #38b6ff 100%);
+        border-radius: 10px;
+        transition: width 0.7s cubic-bezier(.39,.575,.56,1);
+    }
+    .tries-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
+        font-size: 1.2rem;
+    }
+    .tries-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+    }
+    .tries-list li:last-child {
+        border-bottom: none;
+    }
+    .try-icon {
+        font-size: 1.3rem;
+        margin-right: 0.5rem;
+    }
+    .play-again-btn {
+        background: #fff;
+        color: #6d28d9;
+        font-weight: 700;
+        font-size: 1.18rem;
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2.5rem;
+        text-decoration: none;
+        transition: background 0.18s, color 0.18s, transform 0.13s;
+        margin: 0 0.5rem;
+        box-shadow: 0 2px 12px 0 #6d28d955;
+    }
+    .play-again-btn:hover {
+        background: #a259ff;
+        color: #fff;
+        transform: scale(1.04);
+    }
+    .result-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .go-home-btn {
+        background: #ffe066;
+        color: #6d28d9;
+    }
+    .go-home-btn:hover {
+        background: #fff;
+        color: #a259ff;
+    }
+    .stats-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        justify-content: center;
+    }
+    .stat-card {
+        background: rgba(255,255,255,0.13);
+        border-radius: 14px;
+        padding: 1rem 1.5rem;
+        min-width: 150px;
+        box-shadow: 0 2px 12px 0 #6d28d933;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffe066;
+    }
+    .stat-card .label {
+        font-size: 1rem;
+        color: #e0e7ff;
+        margin-top: 0.3rem;
+    }
+</style>
+
+<div class="result-container">
+    <div class="result-summary">
+        <div class="confetti">🎉</div>
+        <div class="summary-title">{{ session_data.average_score|floatformat:0 }} ms</div>
+        <div class="summary-subtitle">Your Average Reaction Time</div>
+        <p class="performance-comment">"{{ performance_comment }}"</p>
+        <div class="progress-bar-bg">
+            <div class="progress-bar" style="width: {{ progress_width }}%; min-width: 5%;"></div>
+        </div>
+        <ul class="tries-list">
+            {% for score in session_data.scores %}
+            <li>
+                <span><span class="try-icon">⚡</span>Try {{ forloop.counter }}</span>
+                <strong>{{ score|floatformat:0 }} ms</strong>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="result-buttons">
+            <a href="{% url 'reaction_test' %}" class="play-again-btn">Try Again</a>
+            <a href="{% url 'dashboard' %}" class="play-again-btn go-home-btn">Go to Home</a>
+        </div>
+    </div>
+
+    <h3 style="margin-top:2rem; color:#ffe066; font-size:1.4rem; letter-spacing:0.01em;">Your Updated Stats</h3>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="value">⏱️ {{ user_stats.best_time|floatformat:0 }} ms</div>
+            <div class="label">New Best Time</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">🏅 #{{ user_stats.global_rank|intcomma }}</div>
+            <div class="label">Global Rank</div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

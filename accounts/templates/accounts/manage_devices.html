@@ -1,0 +1,145 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Manage Trusted Devices{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        Trusted Devices
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if trusted_devices %}
+                        <p class="text-muted mb-4">
+                            These devices can automatically log you in without entering your password.
+                        </p>
+                        
+                        <div class="row">
+                            {% for device in trusted_devices %}
+                                <div class="col-12 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-8">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="device-icon me-3">
+                                                            <i class="fas fa-laptop fa-2x text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-1">{{ device.device_name }}</h6>
+                                                            <p class="text-muted mb-1 small">
+                                                                <i class="fas fa-browser me-1"></i>
+                                                                {{ device.browser_info|truncatechars:50 }}
+                                                            </p>
+                                                            <p class="text-muted mb-0 small">
+                                                                <i class="fas fa-clock me-1"></i>
+                                                                Last used: {{ device.last_used|date:"M j, Y g:i A" }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 text-end">
+                                                    <form method="post" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="remove_device" value="{{ device.id }}">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                                onclick="return confirm('Are you sure you want to remove this device? You will need to log in with your password next time.')">
+                                                            <i class="fas fa-trash me-1"></i>
+                                                            Remove
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Trusted Devices</h5>
+                            <p class="text-muted">
+                                You haven't set up any trusted devices yet. 
+                                Check "Remember Device" when logging in to enable automatic login.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.device-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 10px;
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+</style>
+
+<nav class="nav">
+    <a href="{% url 'dashboard' %}" class="nav-link">
+        <i class="fas fa-home"></i> Home
+    </a>
+    <!-- Add other nav links here if needed -->
+</nav>
+{% endblock %} 

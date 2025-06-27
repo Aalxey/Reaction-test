@@ -1,0 +1,944 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Evade & Sequence - Instructions{% endblock %}
+
+{% block content %}
+<head>
+    <link rel="stylesheet" href="{% static 'accounts/css/professional_dark_theme.css' %}">
+    <style>
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden !important;
+        }
+
+        .main-header { display: none; } /* Fullscreen */
+        .nav { display: none; } /* Hide navigation bar */
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Container */
+        .instructions-container {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated background */
+        .instructions-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(1deg); }
+        }
+
+        /* Content wrapper */
+        .content-wrapper {
+            overflow-x: auto;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            min-height: 100vh;
+            justify-content: center;
+        }
+
+        /* Header Section */
+        .game-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .game-icon {
+            font-size: clamp(3rem, 8vw, 5rem);
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.5));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .game-title {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #a855f7, #8b5cf6, #6366f1, #22c55e);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            letter-spacing: 2px;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .game-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: #94a3b8;
+            margin: 1rem 0 0 0;
+            font-weight: 500;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        /* Instructions Grid */
+        .instructions-grid {
+            overflow-x: auto;
+            width: 100%;
+            max-width: 100vw;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .instruction-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .instruction-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .instruction-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .instruction-card:hover::before {
+            opacity: 1;
+        }
+
+        .sequence-card {
+            border-left: 4px solid #22c55e;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(30, 41, 59, 0.9));
+        }
+
+        .sequence-card::before {
+            background: linear-gradient(90deg, transparent, #22c55e, transparent);
+        }
+
+        .evasion-card {
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(30, 41, 59, 0.9));
+        }
+
+        .evasion-card::before {
+            background: linear-gradient(90deg, transparent, #ef4444, transparent);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .sequence-card .card-icon {
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .evasion-card .card-icon {
+            background: rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .instruction-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: 0.5px;
+        }
+
+        .sequence-card .card-header h3 {
+            color: #22c55e;
+        }
+
+        .evasion-card .card-header h3 {
+            color: #ef4444;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .instruction-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(8px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .instruction-icon {
+            font-size: 1.3rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .instruction-item span:last-child {
+            color: #cbd5e1;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        /* Scoring Section */
+        .scoring-section {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            width: 100%;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .scoring-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .scoring-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .scoring-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #f59e0b;
+            letter-spacing: 0.5px;
+        }
+
+        .scoring-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .scoring-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .score-item:hover {
+            transform: translateX(8px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .score-item.positive {
+            border-left: 4px solid #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .score-item.bonus {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .score-item.negative {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .score-item.danger {
+            border-left: 4px solid #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .score-icon {
+            font-size: 1.4rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .score-text {
+            flex: 1;
+            color: #cbd5e1;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .score-value {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .positive .score-value {
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .bonus .score-value {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .negative .score-value {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .danger .score-value {
+            color: #dc2626;
+            background: rgba(220, 38, 38, 0.2);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.2rem;
+            padding: 1.2rem 2.5rem;
+            border: none;
+            color: white;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            min-width: 180px;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .action-button:hover::before {
+            left: 100%;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, #a855f7, #8b5cf6, #6366f1);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6);
+        }
+
+        .start-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(168, 85, 247, 0.8);
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            box-shadow: 0 8px 25px rgba(107, 114, 128, 0.6);
+        }
+
+        .back-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(107, 114, 128, 0.8);
+        }
+
+        .button-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .action-button:hover .button-icon {
+            transform: scale(1.2);
+        }
+
+        .button-text {
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .button-info {
+            margin-top: 2rem;
+            text-align: center;
+            animation: fadeInUp 1s ease-out 0.8s both;
+        }
+
+        .recommendation {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin: 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .mobile-hint {
+            color: #facc15;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(250, 204, 21, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+            display: none;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                padding: 1.5rem;
+                gap: 2rem;
+            }
+            
+            .instructions-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .scoring-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper {
+                padding: 1rem;
+                gap: 1.5rem;
+            }
+
+            .game-icon {
+                font-size: 3.5rem;
+            }
+
+            .game-title {
+                font-size: 2.5rem;
+            }
+
+            .game-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .instruction-card {
+                padding: 1.5rem;
+            }
+
+            .card-header {
+                gap: 0.75rem;
+            }
+
+            .card-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .card-header h3 {
+                font-size: 1.3rem;
+            }
+
+            .instruction-item {
+                padding: 0.8rem;
+                gap: 0.75rem;
+            }
+
+            .instruction-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 1.1rem;
+            }
+
+            .instruction-item span:last-child {
+                font-size: 0.95rem;
+            }
+
+            .scoring-section {
+                padding: 1.5rem;
+            }
+
+            .scoring-header {
+                gap: 0.75rem;
+            }
+
+            .scoring-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .scoring-header h3 {
+                font-size: 1.3rem;
+            }
+
+            .score-item {
+                padding: 0.8rem;
+                gap: 0.75rem;
+            }
+
+            .score-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 1.2rem;
+            }
+
+            .score-text {
+                font-size: 0.95rem;
+            }
+
+            .score-value {
+                font-size: 0.95rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-button {
+                font-size: 1.1rem;
+                padding: 1rem 2rem;
+                min-width: 160px;
+            }
+
+            .button-text {
+                font-size: 1rem;
+            }
+
+            .recommendation {
+                font-size: 0.95rem;
+            }
+
+            .mobile-hint {
+                display: block !important;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 0.75rem;
+                gap: 1rem;
+            }
+
+            .game-icon {
+                font-size: 3rem;
+            }
+
+            .game-title {
+                font-size: 2rem;
+            }
+
+            .game-subtitle {
+                font-size: 1rem;
+            }
+
+            .instruction-card {
+                padding: 1rem;
+            }
+
+            .card-header h3 {
+                font-size: 1.2rem;
+            }
+
+            .instruction-item {
+                padding: 0.6rem;
+            }
+
+            .instruction-item span:last-child {
+                font-size: 0.9rem;
+            }
+
+            .scoring-section {
+                padding: 1rem;
+            }
+
+            .scoring-header h3 {
+                font-size: 1.2rem;
+            }
+
+            .score-item {
+                padding: 0.6rem;
+            }
+
+            .score-text {
+                font-size: 0.9rem;
+            }
+
+            .score-value {
+                font-size: 0.9rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .action-button {
+                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
+                min-width: 140px;
+            }
+
+            .button-text {
+                font-size: 0.95rem;
+            }
+
+            .recommendation {
+                font-size: 0.9rem;
+            }
+
+            .mobile-hint {
+                font-size: 0.8rem;
+                padding: 0.8rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
+                display: none !important;
+            }
+            html, body {
+                width: 100vw !important;
+                min-width: 0 !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        /* Landscape orientation adjustments */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .content-wrapper {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .game-header {
+                margin-bottom: 1rem;
+            }
+            
+            .game-icon {
+                font-size: 2.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .game-title {
+                font-size: 2rem;
+            }
+            
+            .game-subtitle {
+                font-size: 0.9rem;
+                margin: 0.5rem 0 0 0;
+            }
+            
+            .instruction-card {
+                padding: 1rem;
+            }
+            
+            .scoring-section {
+                padding: 1rem;
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .instruction-card,
+            .scoring-section {
+                border-width: 0.5px;
+            }
+        }
+
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<div class="instructions-container">
+    <div class="content-wrapper">
+        <!-- Header Section -->
+        <div class="game-header">
+            <div class="game-icon">🎮</div>
+            <h1 class="game-title">Evade & Sequence</h1>
+            <p class="game-subtitle">Dual-Task Challenge</p>
+        </div>
+        
+        <!-- Instructions Grid -->
+        <div class="instructions-grid">
+            <div class="instruction-card sequence-card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <h3>Sequence Task</h3>
+                </div>
+                <div class="card-content">
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🎯</span>
+                        <span>Click numbers 1→2→3→4→5 in order</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">💡</span>
+                        <span>Yellow highlight shows next number</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">⭐</span>
+                        <span>Complete sequences for bonus points</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">⚡</span>
+                        <span>Speed increases with consecutive correct clicks</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instruction-card evasion-card">
+                <div class="card-header">
+                    <div class="card-icon">⚡</div>
+                    <h3>Evasion Task</h3>
+                </div>
+                <div class="card-content">
+                    <div class="instruction-item">
+                        <span class="instruction-icon">👁️</span>
+                        <span>Watch minimap for red enemy</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🔵</span>
+                        <span>When enemy enters blue range</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🚨</span>
+                        <span>Click EVADE button to survive</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🎯</span>
+                        <span>Enemy speed increases over time</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring Section -->
+        <div class="scoring-section">
+            <div class="scoring-header">
+                <div class="scoring-icon">🏆</div>
+                <h3>Scoring System</h3>
+            </div>
+            <div class="scoring-grid">
+                <div class="scoring-column">
+                    <div class="score-item positive">
+                        <span class="score-icon">✓</span>
+                        <span class="score-text">Correct number</span>
+                        <span class="score-value">+10 points</span>
+                    </div>
+                    <div class="score-item bonus">
+                        <span class="score-icon">★</span>
+                        <span class="score-text">Complete sequence</span>
+                        <span class="score-value">+50 bonus</span>
+                    </div>
+                    <div class="score-item bonus">
+                        <span class="score-icon">🔥</span>
+                        <span class="score-text">Consecutive correct</span>
+                        <span class="score-value">+5 bonus</span>
+                    </div>
+                </div>
+                <div class="scoring-column">
+                    <div class="score-item negative">
+                        <span class="score-icon">✗</span>
+                        <span class="score-text">Wrong number</span>
+                        <span class="score-value">+1 miss</span>
+                    </div>
+                    <div class="score-item negative">
+                        <span class="score-icon">⏰</span>
+                        <span class="score-text">Number timeout</span>
+                        <span class="score-value">+1 miss</span>
+                    </div>
+                    <div class="score-item danger">
+                        <span class="score-icon">💀</span>
+                        <span class="score-text">3 misses = Game Over</span>
+                        <span class="score-value">Game Over</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'evade_and_sequence' %}" class="action-button start-button" id="start-game-btn">
+                <span class="button-icon">🚀</span>
+                <span class="button-text">Start Game</span>
+            </a>
+            <a href="{% url 'dashboard' %}" class="action-button back-button">
+                <span class="button-icon">←</span>
+                <span class="button-text">Back to Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Button Info -->
+        <div class="button-info">
+            <p class="mobile-hint">📱 Look for the pulsing button in the bottom-right corner!</p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

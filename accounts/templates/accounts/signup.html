@@ -1,0 +1,394 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 30%, #6d28d9 0%, #2d033b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+        .glass {
+            background: rgba(40, 13, 62, 0.75);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 1.5px 8px 0 rgba(162, 89, 255, 0.15);
+            backdrop-filter: blur(12px) saturate(120%);
+            border-radius: 18px;
+            padding: 2.1rem 1.3rem 2.1rem 1.3rem;
+            width: 340px;
+            color: #fff;
+            border: 1.5px solid rgba(162, 89, 255, 0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass:hover {
+            box-shadow: 0 12px 40px 0 #a259ff44, 0 2.5px 16px 0 #ff5f8f33;
+            transform: scale(1.025);
+        }
+        .glass h2 {
+            text-align: center;
+            margin-bottom: 0.7rem;
+            font-size: 1.25rem;
+            width: 100%;
+        }
+        .glass p {
+            text-align: center;
+            color: #bbb;
+            margin-bottom: 1.2rem;
+            margin-top: 0;
+            width: 100%;
+        }
+        .glass form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            width: 100%;
+            align-items: stretch;
+        }
+        .floating-label {
+            position: relative;
+            margin-bottom: 0.3rem;
+        }
+        .floating-label input[type="text"],
+        .floating-label input[type="email"],
+        .floating-label input[type="password"] {
+            width: 100%;
+            padding: 0.95rem 0.7rem 0.4rem 0.7rem;
+            border-radius: 12px;
+            border: 1.2px solid rgba(162, 89, 255, 0.18);
+            background: rgba(255,255,255,0.13);
+            color: #fff;
+            font-size: 1.04rem;
+            transition: background 0.2s, box-shadow 0.2s, border 0.2s;
+            box-sizing: border-box;
+        }
+        .floating-label input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.19);
+            box-shadow: 0 0 0 2px #a259ff55;
+            border: 1.2px solid #a259ff;
+        }
+        .floating-label label {
+            position: absolute;
+            left: 0.85rem;
+            top: 0.95rem;
+            color: #bbb;
+            font-size: 1.04rem;
+            pointer-events: none;
+            background: transparent;
+            transition: all 0.18s cubic-bezier(.4,0,.2,1);
+        }
+        .floating-label input:focus + label,
+        .floating-label input:not(:placeholder-shown) + label {
+            top: 0.22rem;
+            left: 0.7rem;
+            font-size: 0.87rem;
+            color: #a259ff;
+            background: rgba(40, 13, 62, 0.85);
+            padding: 0 0.18em;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #ff5f8f 0%, #a259ff 100%);
+            border: none;
+            color: #fff;
+            padding: 0.6rem;
+            border-radius: 7px;
+            font-size: 0.97rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.3rem;
+            box-shadow: 0 2px 8px 0 #a259ff33;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+        .btn-primary:hover {
+            opacity: 0.95;
+            box-shadow: 0 4px 16px 0 #a259ff44;
+            transform: translateY(-2px) scale(1.03);
+        }
+        .terms {
+            font-size: 0.85rem;
+            color: #bbb;
+        }
+        .alt-signup {
+            text-align: center;
+            margin-top: 1.1rem;
+        }
+        .alt-signup button {
+            margin: 0 0.4rem;
+            background: #fff;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 0.35rem 0.7rem;
+            font-weight: 500;
+            font-size: 0.93rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px 0 #a259ff22;
+        }
+        .alt-signup button:hover {
+            background: #eee;
+            box-shadow: 0 2px 8px 0 #a259ff33;
+        }
+        .signin-link {
+            text-align: center;
+            margin-top: 1.1rem;
+            font-size: 0.92rem;
+            width: 100%;
+        }
+        .signin-link a {
+            color: #ff5f8f;
+            text-decoration: none;
+        }
+        .signin-link a:hover {
+            text-decoration: underline;
+        }
+        .errorlist {
+            color: #ffb3b3;
+            margin: 0 0 0.3rem 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.92rem;
+        }
+        .errorlist li {
+            display: flex;
+            align-items: center;
+            gap: 0.3em;
+        }
+        .error-icon {
+            font-size: 1em;
+            color: #ff5f8f;
+            margin-right: 0.15em;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 0.98rem;
+            z-index: 2;
+            padding: 2px 4px;
+            border-radius: 50%;
+            transition: background 0.18s, color 0.18s;
+        }
+        .password-toggle:focus,
+        .password-toggle:hover {
+            background: rgba(162, 89, 255, 0.10);
+            color: #a259ff;
+        }
+        .password-match {
+            font-size: 0.89rem;
+            margin-top: 0.15rem;
+            margin-left: 0.1rem;
+            color: #ffb3b3;
+            min-height: 1.1em;
+            transition: color 0.2s;
+        }
+        .password-match.match {
+            color: #7fffbe;
+        }
+        .remember-device {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        .remember-device input[type="checkbox"] {
+            width: 1.1rem;
+            height: 1.1rem;
+            accent-color: #a259ff;
+            cursor: pointer;
+        }
+        .remember-device label {
+            cursor: pointer;
+            user-select: none;
+        }
+        @media (max-width: 480px) {
+            .glass {
+                width: 95vw;
+                max-width: 350px;
+                padding: 1.5rem 1rem;
+                margin: 1rem;
+            }
+            
+            .glass h2 {
+                font-size: 1.1rem;
+            }
+            
+            .glass p {
+                font-size: 0.9rem;
+            }
+            
+            .floating-label input {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 1rem 0.7rem 0.4rem 0.7rem;
+            }
+            
+            .btn-primary {
+                padding: 1rem;
+                font-size: 1rem;
+                min-height: 48px;
+            }
+            
+            .password-toggle {
+                right: 0.5rem;
+                font-size: 1.1rem;
+                padding: 4px 6px;
+            }
+            
+            .alt-signup button {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                min-height: 44px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .glass {
+                width: 90vw;
+                max-width: 400px;
+                padding: 2rem 1.5rem;
+            }
+        }
+        
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary,
+            .password-toggle,
+            .alt-signup button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .glass:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass fade-in">
+        <h2><span style="font-size:1.5rem;">👤</span><br>Create Account</h2>
+        <p style="text-align:center; color:#bbb; margin-bottom:1rem;">Join us and start your journey today</p>
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <ul class="errorlist">
+                {% for error in form.non_field_errors %}
+                    <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            <div class="floating-label">
+                <input type="text" name="full_name" id="id_full_name" class="form-control" placeholder=" " value="{{ form.full_name.value|default:'' }}" required maxlength="150">
+                <label for="id_full_name">Username</label>
+                {% if form.full_name.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.full_name.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="floating-label">
+                <input type="email" name="email" id="id_email" class="form-control" placeholder=" " value="{{ form.email.value|default:'' }}" required>
+                <label for="id_email">Email Address</label>
+                {% if form.email.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.email.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="floating-label">
+                <input type="password" name="password" id="id_password" class="form-control" placeholder=" " required oninput="checkPasswordMatch()">
+                <label for="id_password">Password</label>
+                <button type="button" class="password-toggle" onclick="togglePassword('id_password', this)"><span id="eye_id_password">👁️</span></button>
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.password.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="floating-label">
+                <input type="password" name="confirm_password" id="id_confirm_password" class="form-control" placeholder=" " required oninput="checkPasswordMatch()">
+                <label for="id_confirm_password">Confirm Password</label>
+                <button type="button" class="password-toggle" onclick="togglePassword('id_confirm_password', this)"><span id="eye_id_confirm_password">👁️</span></button>
+                {% if form.confirm_password.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.confirm_password.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div id="password-match-message" class="password-match"></div>
+            <div class="remember-device">
+                <input type="checkbox" name="remember_device" id="id_remember_device">
+                <label for="id_remember_device">Remember this device for automatic login</label>
+            </div>
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+        
+        <div class="signin-link">
+            Already have an account? <a href="{% url 'login' %}">Sign in here</a>
+        </div>
+    </div>
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            const eye = btn.querySelector('span');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                eye.textContent = '👁️';
+            }
+        }
+        function checkPasswordMatch() {
+            const pw = document.getElementById('id_password').value;
+            const cpw = document.getElementById('id_confirm_password').value;
+            const msg = document.getElementById('password-match-message');
+            if (!pw && !cpw) {
+                msg.textContent = '';
+                msg.classList.remove('match');
+            } else if (pw === cpw) {
+                msg.textContent = 'Passwords match!';
+                msg.classList.add('match');
+            } else {
+                msg.textContent = 'Passwords do not match.';
+                msg.classList.remove('match');
+            }
+        }
+    </script>
+</body>
+</html> 

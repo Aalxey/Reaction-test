@@ -1,0 +1,639 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% load static %}
+{% block title %}{{ profile_user.first_name }} {{ profile_user.last_name }} - Profile{% endblock %}
+
+{% block style %}
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        color: #e0e7ff;
+    }
+    
+    .profile-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .profile-header h1 {
+        font-size: 2.75rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-header p {
+        font-size: 1.1rem;
+        color: #a7b3d9;
+    }
+    
+    .user-info-card {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .user-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .info-item {
+        text-align: center;
+    }
+    
+    .info-label {
+        font-size: 0.9rem;
+        color: #a7b3d9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+    }
+    
+    .stat-card h3 {
+        margin: 0 0 1rem 0;
+        color: #fff;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .stat-card h3 i {
+        color: #a259ff;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        color: #a7b3d9;
+        font-size: 0.9rem;
+    }
+    
+    .stat-value {
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+    }
+    
+    .chart-card h3 {
+        margin: 0 0 1rem 0;
+        color: #fff;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .chart-card h3 i {
+        color: #a259ff;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .recent-results {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .recent-results h3 {
+        margin: 0 0 1rem 0;
+        color: #fff;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .recent-results h3 i {
+        color: #a259ff;
+    }
+    
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .result-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .result-game {
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.9rem;
+    }
+    
+    .result-date {
+        font-size: 0.8rem;
+        color: #a7b3d9;
+    }
+    
+    .result-score {
+        font-weight: 600;
+        color: #a259ff;
+    }
+    
+    .activity-log {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+    }
+    
+    .activity-log h3 {
+        margin: 0 0 1rem 0;
+        color: #fff;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .activity-log h3 i {
+        color: #a259ff;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(162, 89, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a259ff;
+    }
+    
+    .activity-info {
+        flex: 1;
+    }
+    
+    .activity-action {
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.9rem;
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: #a7b3d9;
+    }
+    
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        margin-bottom: 2rem;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+    
+    .no-data {
+        text-align: center;
+        color: #a7b3d9;
+        font-style: italic;
+        padding: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <nav class="nav">
+        <a href="{% url 'dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i> Home
+        </a>
+        <!-- Add other nav links here if needed -->
+    </nav>
+    
+    <a href="{% url 'admin_dashboard' %}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Admin Dashboard
+    </a>
+    
+    <header class="profile-header">
+        <h1>{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
+        <p>@{{ profile_user.username }} • {{ profile_user.email }}</p>
+    </header>
+
+    <div class="user-info-card">
+        <div class="user-info-grid">
+            <div class="info-item">
+                <div class="info-label">Member Since</div>
+                <div class="info-value">{{ profile_user.date_joined|date:"M Y" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Last Login</div>
+                <div class="info-value">{{ profile_user.last_login|date:"M d, Y"|default:"Never" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Account Status</div>
+                <div class="info-value">
+                    {% if profile_user.is_active %}
+                        <span style="color: #22c55e;">Active</span>
+                    {% else %}
+                        <span style="color: #ef4444;">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Role</div>
+                <div class="info-value">
+                    {% if profile_user.is_staff %}
+                        <span style="color: #FFD700;">Admin</span>
+                    {% else %}
+                        <span style="color: #3b82f6;">User</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3><i class="fas fa-bolt"></i>Reaction Test Stats</h3>
+            <div class="stat-item">
+                <span class="stat-label">Total Tests</span>
+                <span class="stat-value">{{ total_reaction_tests }}</span>
+            </div>
+            {% if best_reaction %}
+            <div class="stat-item">
+                <span class="stat-label">Best Time</span>
+                <span class="stat-value">{{ best_reaction.time|floatformat:3 }}s</span>
+            </div>
+            {% endif %}
+            {% if avg_reaction_time %}
+            <div class="stat-item">
+                <span class="stat-label">Average Time</span>
+                <span class="stat-value">{{ avg_reaction_time|floatformat:3 }}s</span>
+            </div>
+            {% endif %}
+            {% if not best_reaction %}
+            <div class="no-data">No reaction test data available</div>
+            {% endif %}
+        </div>
+
+        <div class="stat-card">
+            <h3><i class="fas fa-gamepad"></i>Evade & Sequence Stats</h3>
+            <div class="stat-item">
+                <span class="stat-label">Total Games</span>
+                <span class="stat-value">{{ total_evade_games }}</span>
+            </div>
+            {% if best_evade %}
+            <div class="stat-item">
+                <span class="stat-label">Best Score</span>
+                <span class="stat-value">{{ best_evade.score }}</span>
+            </div>
+            {% endif %}
+            {% if avg_evade_score %}
+            <div class="stat-item">
+                <span class="stat-label">Average Score</span>
+                <span class="stat-value">{{ avg_evade_score|floatformat:1 }}</span>
+            </div>
+            {% endif %}
+            {% if not best_evade %}
+            <div class="no-data">No evade game data available</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if reaction_results or evade_results %}
+    <div class="charts-grid">
+        {% if reaction_results %}
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-line"></i>Reaction Test Performance</h3>
+            <div class="chart-container">
+                <canvas id="reactionChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if evade_results %}
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-bar"></i>Evade & Sequence Performance</h3>
+            <div class="chart-container">
+                <canvas id="evadeChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- All Reaction Test Sessions Table -->
+    <div class="recent-results">
+        <h3><i class="fas fa-bolt"></i>All Reaction Test Sessions</h3>
+        {% if all_reaction_results %}
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="color:#a7b3d9; text-align:left;">
+                    <th style="padding:0.5rem;">Date</th>
+                    <th style="padding:0.5rem;">Time (s)</th>
+                    <th style="padding:0.5rem;">Leaderboard</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in all_reaction_results %}
+                <tr style="background:rgba(255,255,255,0.03);">
+                    <td style="padding:0.5rem;">{{ result.timestamp|date:"M d, Y H:i" }}</td>
+                    <td style="padding:0.5rem;">{{ result.time|floatformat:3 }}</td>
+                    <td style="padding:0.5rem;">{% if result.is_for_leaderboard %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="no-data">No reaction test data available</div>
+        {% endif %}
+    </div>
+
+    <!-- All Evade & Sequence Sessions Table -->
+    <div class="recent-results">
+        <h3><i class="fas fa-gamepad"></i>All Evade & Sequence Sessions</h3>
+        {% if all_evade_results %}
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="color:#a7b3d9; text-align:left;">
+                    <th style="padding:0.5rem;">Date</th>
+                    <th style="padding:0.5rem;">Score</th>
+                    <th style="padding:0.5rem;">Misses</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in all_evade_results %}
+                <tr style="background:rgba(255,255,255,0.03);">
+                    <td style="padding:0.5rem;">{{ result.timestamp|date:"M d, Y H:i" }}</td>
+                    <td style="padding:0.5rem;">{{ result.score }}</td>
+                    <td style="padding:0.5rem;">{{ result.misses }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="no-data">No evade game data available</div>
+        {% endif %}
+    </div>
+
+    <div class="activity-log">
+        <h3><i class="fas fa-clock"></i>Recent Activity</h3>
+        {% if recent_logins %}
+            {% for login in recent_logins %}
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <div class="activity-info">
+                    <div class="activity-action">Logged in</div>
+                    <div class="activity-time">{{ login.timestamp|date:"M d, Y H:i" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">No recent activity</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Reaction Test Chart
+{% if reaction_chart_labels and reaction_chart_scores %}
+const reactionCtx = document.getElementById('reactionChart').getContext('2d');
+const reactionChart = new Chart(reactionCtx, {
+    type: 'line',
+    data: {
+        labels: {{ reaction_chart_labels|safe }},
+        datasets: [{
+            label: 'Reaction Time (ms)',
+            data: {{ reaction_chart_scores|safe }},
+            backgroundColor: 'rgba(255, 224, 102, 0.2)',
+            borderColor: '#ffe066',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: false,
+            pointBackgroundColor: '#ffe066',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 7,
+            pointHoverBackgroundColor: '#ffe066',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index',
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    color: '#e0e7ff',
+                    callback: function(value) {
+                        return value + ' ms';
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#e0e7ff',
+                    maxRotation: 45,
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e0e7ff',
+                    usePointStyle: true,
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#e0e7ff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+            }
+        }
+    }
+});
+{% endif %}
+
+// Evade & Sequence Chart
+{% if evade_chart_labels and evade_chart_scores %}
+const evadeCtx = document.getElementById('evadeChart').getContext('2d');
+const evadeChart = new Chart(evadeCtx, {
+    type: 'line',
+    data: {
+        labels: {{ evade_chart_labels|safe }},
+        datasets: [{
+            label: 'Score',
+            data: {{ evade_chart_scores|safe }},
+            backgroundColor: 'rgba(162, 89, 255, 0.2)',
+            borderColor: '#a259ff',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: false,
+            pointBackgroundColor: '#a259ff',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 7,
+            pointHoverBackgroundColor: '#a259ff',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index',
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    color: '#e0e7ff',
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#e0e7ff',
+                    maxRotation: 45,
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e0e7ff',
+                    usePointStyle: true,
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#e0e7ff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %} 

@@ -1,0 +1,241 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Reaction Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling */
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Dark blue background */
+        }
+        #test-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        #game-box {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: background-color 0.1s;
+        }
+        .blue { background-color: #3b82f6; }
+        .red { background-color: #ef4444; }
+        .green { background-color: #22c55e; }
+
+        #start-screen, #result-screen {
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            user-select: none;
+        }
+        #start-title, #result-title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #start-subtitle, #result-subtitle {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        #status-message-container {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            background: rgba(0,0,0,0.25);
+            padding: 1rem;
+            border-radius: 12px;
+            z-index: 10;
+        }
+        .ranked-status {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .ranked-status.ranked { color: #ffe066; }
+        .ranked-status.practice { color: #3b82f6; }
+        .ranked-info {
+            margin: 0.2rem 0 0 0;
+            font-size: 0.9rem;
+            color: #e0e7ff;
+            opacity: 0.8;
+        }
+        #controls-container {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .control-btn {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-container">
+        <div id="status-message-container">
+            {% if ranked_attempts_count < 3 %}
+                <p class="ranked-status ranked">Ranked Attempt: {{ ranked_attempts_count|add:1 }} of 3</p>
+                <p class="ranked-info">This counts towards your leaderboard rank.</p>
+            {% else %}
+                <p class="ranked-status practice">Practice Mode</p>
+                <p class="ranked-info">This will not affect your rank.</p>
+            {% endif %}
+        </div>
+        
+        <div id="game-box" class="blue">
+            <div id="start-screen">
+                <h1 id="start-title">Click to Start</h1>
+                <p id="start-subtitle">Wait for green!</p>
+            </div>
+            <div id="result-screen" style="display: none;">
+                <h1 id="result-title"></h1>
+                <p id="result-subtitle"></p>
+            </div>
+        </div>
+        
+        <div id="controls-container">
+            <a href="{% url 'dashboard' %}" class="control-btn" title="Exit Game"><i class="fas fa-times"></i></a>
+            <button id="fullscreen-btn" class="control-btn" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const gameBox = document.getElementById('game-box');
+        const startScreen = document.getElementById('start-screen');
+        const startTitle = document.getElementById('start-title');
+        const startSubtitle = document.getElementById('start-subtitle');
+        const resultScreen = document.getElementById('result-screen');
+        const resultTitle = document.getElementById('result-title');
+        const resultSubtitle = document.getElementById('result-subtitle');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+        let startTime, endTime, timer;
+        let tryCount = 0;
+        const totalTries = 3;
+        let scores = [];
+
+        function getRandomTime(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function showResult(ms) {
+            resultTitle.textContent = `${ms} ms`;
+            startScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+        }
+
+        function saveAverageScore() {
+            const sum = scores.reduce((a, b) => a + b, 0);
+            const avg = sum / scores.length;
+
+            fetch("{% url 'save_score' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ time: avg, scores: scores })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    window.location.href = "{% url 'reaction_test_result' %}";
+                }
+            });
+        }
+
+        function runGame() {
+            tryCount++;
+            if (tryCount > totalTries) {
+                saveAverageScore();
+                return;
+            }
+
+            gameBox.className = 'game-box red';
+            resultScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+            startTitle.textContent = `Get Ready for Try #${tryCount}`;
+            startSubtitle.textContent = 'Wait for green...';
+
+            timer = setTimeout(() => {
+                gameBox.className = 'game-box green';
+                startTime = new Date();
+            }, getRandomTime(1000, 4000));
+        }
+
+        gameBox.addEventListener('click', () => {
+            if (gameBox.classList.contains('green')) {
+                endTime = new Date();
+                const reactionTime = endTime - startTime;
+                scores.push(reactionTime);
+                showResult(reactionTime);
+                gameBox.className = 'game-box blue';
+                setTimeout(runGame, 2000);
+            } else if (gameBox.classList.contains('red')) {
+                clearTimeout(timer);
+                alert("Too soon! Try again.");
+                runGame();
+            } else if (gameBox.classList.contains('blue')) {
+                runGame();
+            }
+        });
+
+        // Fullscreen API Logic
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    </script>
+</body>
+</html> 

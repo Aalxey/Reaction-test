@@ -1,0 +1,619 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}Evade & Sequence - Preparation{% endblock %}
+
+{% block content %}
+<style>
+    html, body {
+        max-width: 100vw;
+        overflow-x: hidden !important;
+    }
+    
+    .main-header { display: none; } /* Fullscreen */
+    .nav { display: none; } /* Hide navigation bar */
+    
+    .warning-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        min-height: 100vh;
+        color: #f1f5f9;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.6;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    .warning-page::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    
+    .warning-container {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .warning-header {
+        text-align: center;
+        margin-bottom: 4rem;
+        position: relative;
+    }
+    
+    .warning-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, #f59e0b, #f97316, #f59e0b);
+        border-radius: 2px;
+    }
+    
+    .warning-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #f59e0b, #f97316, #fbbf24);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+        text-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+    }
+    
+    .warning-subtitle {
+        font-size: 1.25rem;
+        color: #94a3b8;
+        font-weight: 500;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .warning-section {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    
+    .warning-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    .warning-section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .warning-section-title.overview {
+        color: #f59e0b;
+    }
+    
+    .warning-section-title.sequence {
+        color: #10b981;
+    }
+    
+    .warning-section-title.evasion {
+        color: #ef4444;
+    }
+    
+    .warning-section-title.scoring {
+        color: #f59e0b;
+    }
+    
+    .warning-section-title.preparation {
+        color: #ef4444;
+    }
+    
+    .warning-section-title.challenge {
+        color: #8b5cf6;
+    }
+    
+    .tasks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    
+    .task-card {
+        background: rgba(51, 65, 85, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .task-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent-color), var(--accent-color-light));
+    }
+    
+    .task-card.sequence::before {
+        --accent-color: #10b981;
+        --accent-color-light: #34d399;
+    }
+    
+    .task-card.evasion::before {
+        --accent-color: #ef4444;
+        --accent-color-light: #f87171;
+    }
+    
+    .task-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .task-card h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .task-card.sequence h3 {
+        color: #10b981;
+    }
+    
+    .task-card.evasion h3 {
+        color: #ef4444;
+    }
+    
+    .task-list {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: #cbd5e1;
+        line-height: 1.8;
+    }
+    
+    .task-list li {
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    
+    .task-list li::marker {
+        color: var(--accent-color);
+    }
+    
+    .scoring-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .scoring-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+    
+    .scoring-item:hover {
+        background: rgba(51, 65, 85, 0.8);
+        transform: translateX(4px);
+    }
+    
+    .scoring-item.correct {
+        --accent-color: #10b981;
+    }
+    
+    .scoring-item.bonus {
+        --accent-color: #f59e0b;
+    }
+    
+    .scoring-item.miss {
+        --accent-color: #ef4444;
+    }
+    
+    .scoring-item.gameover {
+        --accent-color: #ef4444;
+    }
+    
+    .scoring-icon {
+        font-size: 1.25rem;
+        width: 24px;
+        text-align: center;
+    }
+    
+    .scoring-text {
+        color: #cbd5e1;
+        font-size: 0.95rem;
+    }
+    
+    .scoring-value {
+        color: #f8fafc;
+        font-weight: 700;
+    }
+    
+    .preparation-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .prep-item {
+        background: rgba(51, 65, 85, 0.5);
+        border: 2px solid var(--accent-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .prep-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .prep-item.browser {
+        --accent-color: #10b981;
+    }
+    
+    .prep-item.landscape {
+        --accent-color: #f59e0b;
+    }
+    
+    .prep-item.checklist {
+        --accent-color: #3b82f6;
+        text-align: left;
+    }
+    
+    .prep-item h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .prep-item.checklist h4 {
+        justify-content: flex-start;
+    }
+    
+    .prep-item.browser h4 {
+        color: #10b981;
+    }
+    
+    .prep-item.landscape h4 {
+        color: #f59e0b;
+    }
+    
+    .prep-item.checklist h4 {
+        color: #3b82f6;
+    }
+    
+    .prep-item p {
+        color: #cbd5e1;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .checklist-list {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: #cbd5e1;
+        line-height: 1.8;
+    }
+    
+    .checklist-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .challenge-note {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .challenge-note::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(139, 92, 246, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .challenge-note p {
+        color: #8b5cf6;
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+        min-width: 180px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .btn:hover::before {
+        left: 100%;
+    }
+    
+    .btn-secondary {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border: 2px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #a855f7, #8b5cf6);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(168, 85, 247, 0.6);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .warning-container {
+            padding: 1.5rem;
+        }
+        
+        .warning-section {
+            padding: 1.5rem;
+        }
+        
+        .tasks-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .scoring-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .warning-container {
+            padding: 1rem;
+        }
+        
+        .warning-section {
+            padding: 1.25rem;
+        }
+        
+        .warning-title {
+            font-size: 2rem;
+        }
+        
+        .warning-subtitle {
+            font-size: 1rem;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
+            display: none !important;
+        }
+        html, body {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+</style>
+
+<div class="warning-page">
+    <div class="warning-container">
+        <header class="warning-header">
+            <h1 class="warning-title">🎮 Evade & Sequence</h1>
+            <p class="warning-subtitle">A challenging dual-task game that tests your focus, reaction time, and multitasking abilities</p>
+        </header>
+
+        <section class="warning-section">
+            <h2 class="warning-section-title overview">🎯 Game Overview</h2>
+            <p style="line-height: 1.7; color: #cbd5e1; font-size: 1.1rem;">
+                This is a <strong>dual-task challenge</strong> that requires you to simultaneously perform two different tasks: 
+                clicking numbers in sequence and evading an approaching enemy. The game adapts to your skill level, 
+                starting easy but becoming progressively more challenging as you improve.
+            </p>
+        </section>
+
+        <div class="tasks-grid">
+            <div class="task-card sequence">
+                <h3>📊 Sequence Task</h3>
+                <ul class="task-list">
+                    <li>Numbers 1-5 spawn randomly on screen</li>
+                    <li>Click them in ascending order: 1→2→3→4→5</li>
+                    <li>Yellow highlight shows the next number to click</li>
+                    <li>Complete full sequences for bonus points</li>
+                    <li>Wrong numbers or timeouts count as misses</li>
+                </ul>
+            </div>
+            
+            <div class="task-card evasion">
+                <h3>⚡ Evasion Task</h3>
+                <ul class="task-list">
+                    <li>Red enemy dot moves toward you on the minimap</li>
+                    <li>Watch the minimap in the top-left corner</li>
+                    <li>When enemy enters the blue detection range</li>
+                    <li>Click the EVADE button to teleport enemy away</li>
+                    <li>If enemy reaches you, it is game over!</li>
+                </ul>
+            </div>
+        </div>
+
+        <section class="warning-section">
+            <h2 class="warning-section-title scoring">🏆 Scoring System</h2>
+            <div class="scoring-grid">
+                <div class="scoring-item correct">
+                    <span class="scoring-icon">✓</span>
+                    <span class="scoring-text">Correct number: <span class="scoring-value">+10 points</span></span>
+                </div>
+                <div class="scoring-item bonus">
+                    <span class="scoring-icon">★</span>
+                    <span class="scoring-text">Complete sequence: <span class="scoring-value">+50 bonus</span></span>
+                </div>
+                <div class="scoring-item miss">
+                    <span class="scoring-icon">✗</span>
+                    <span class="scoring-text">Wrong number: <span class="scoring-value">+1 miss</span></span>
+                </div>
+                <div class="scoring-item gameover">
+                    <span class="scoring-icon">💀</span>
+                    <span class="scoring-text">3 misses = <span class="scoring-value">Game Over</span></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="warning-section">
+            <h2 class="warning-section-title preparation">⚠️ Important Preparation</h2>
+            
+            <div class="preparation-grid">
+                <div class="prep-item browser">
+                    <h4>🌐 Browser Recommendation</h4>
+                    <p>Use Google Chrome browser for the best experience and full feature support</p>
+                </div>
+                
+                <div class="prep-item landscape">
+                    <h4>📱 Landscape Mode Required</h4>
+                    <p>This game is designed for LANDSCAPE mode only for optimal gameplay!</p>
+                </div>
+                
+                <div class="prep-item checklist">
+                    <h4>📋 Before Starting Checklist</h4>
+                    <ul class="checklist-list">
+                        <li>✅ Use Google Chrome browser</li>
+                        <li>✅ Rotate your device to landscape mode</li>
+                        <li>✅ Find a comfortable position</li>
+                        <li>✅ Ensure you have good lighting</li>
+                        <li>✅ Minimize distractions</li>
+                        <li>✅ Get ready to focus intensely!</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="warning-section">
+            <div class="challenge-note">
+                <p>
+                    🧠 <strong>Challenge Level:</strong> This game adapts to your skill level. 
+                    It starts easy but gets progressively more challenging as you improve. 
+                    Do not worry if it feels difficult at first - practice makes perfect!
+                </p>
+            </div>
+        </section>
+
+        <div class="action-buttons">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                ← Back to Dashboard
+            </a>
+            <a href="{% url 'evade_and_sequence_instructions' %}" class="btn btn-primary">
+                🚀 Continue to Instructions
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,230 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% block title %}Dashboard | ReactionTest{% endblock %}
+
+{% block style %}
+<style>
+    html, body {
+        max-width: 100vw;
+        overflow-x: hidden !important;
+    }
+    .dashboard-container {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        color: #e0e7ff;
+    }
+    .welcome-header {
+        text-align: left;
+        margin-bottom: 2.5rem;
+    }
+    .welcome-header h1 {
+        font-size: 2.75rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -1px;
+        margin: 0;
+    }
+    .welcome-header p {
+        font-size: 1.1rem;
+        color: #a7b3d9;
+        margin: 0.2rem 0 0 0;
+    }
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 1.5rem;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    .stat-card {
+        background: rgba(30, 41, 59, 0.5);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #fff;
+    }
+    .stat-card .label {
+        font-size: 0.8rem;
+        color: #a7b3d9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+    }
+    .game-card {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+        color: #e0e7ff;
+    }
+    .game-card:hover {
+        transform: translateY(-5px);
+        border-color: #a259ff;
+    }
+    .game-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 0.5rem 0;
+    }
+    .game-card p {
+        margin: 0 0 1.5rem 0;
+        color: #a7b3d9;
+        flex-grow: 1;
+    }
+    .play-btn {
+        background-color: #a259ff;
+        color: #fff;
+        text-align: center;
+        padding: 0.8rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+    .play-btn:hover {
+        background-color: #8a48e5;
+    }
+    .game-card.coming-soon {
+        background: rgba(30, 41, 59, 0.8);
+        border-style: dashed;
+        cursor: not-allowed;
+    }
+    .game-card.coming-soon:hover {
+        transform: none;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .game-card.coming-soon .play-btn {
+        background-color: #4a5568;
+        cursor: not-allowed;
+    }
+    .account-section {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .account-links {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .account-link {
+        background: rgba(162, 89, 255, 0.2);
+        color: #e0e7ff;
+        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(162, 89, 255, 0.3);
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    .account-link:hover {
+        background: rgba(162, 89, 255, 0.3);
+        border-color: rgba(162, 89, 255, 0.5);
+        color: #fff;
+        transform: translateY(-2px);
+    }
+    @media (max-width: 600px) {
+        [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
+            display: none !important;
+        }
+        html, body {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .dashboard-container {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .games-grid, .stats-grid {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            grid-template-columns: 1fr !important;
+        }
+        .game-card, .stat-card {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="welcome-header">
+        <h1>Welcome back, {{ user.first_name|default:user.username }}!</h1>
+        <p>Ready to test your reflexes?</p>
+    </header>
+
+    <h2 class="section-title">Your Stats</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value">{{ best_time|default:"N/A" }} ms</div>
+            <div class="label">Best Time</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ global_rank|ordinal|default:"N/A" }}</div>
+            <div class="label">Global Rank</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ tests_completed|intcomma }}</div>
+            <div class="label">Tests Completed</div>
+        </div>
+    </div>
+
+    <h2 class="section-title">All Games</h2>
+    <div class="games-grid">
+        <a href="{% url 'reaction_test' %}" class="game-card">
+            <h3>Reaction Test</h3>
+            <p>Test your visual reflexes. Click the box the moment it turns green. Three tries to get your best score on the leaderboard!</p>
+            <div class="play-btn">Play Now</div>
+        </a>
+        <a href="{% url 'evade_and_sequence_warning' %}" class="game-card">
+            <h3>Evade & Sequence</h3>
+            <p>A challenging dual-task game that tests your focus, reaction time, and multitasking abilities. Click numbers in sequence while evading enemies!</p>
+            <div class="play-btn">Play Now</div>
+        </a>
+    </div>
+</div>
+{% endblock %} 

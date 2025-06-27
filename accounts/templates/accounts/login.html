@@ -1,0 +1,333 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 30%, #6d28d9 0%, #2d033b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+        .glass {
+            background: rgba(40, 13, 62, 0.75);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 1.5px 8px 0 rgba(162, 89, 255, 0.15);
+            backdrop-filter: blur(12px) saturate(120%);
+            border-radius: 18px;
+            padding: 2.1rem 1.3rem 2.1rem 1.3rem;
+            width: 340px;
+            color: #fff;
+            border: 1.5px solid rgba(162, 89, 255, 0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass h2 {
+            text-align: center;
+            margin-bottom: 0.7rem;
+            font-size: 1.25rem;
+            width: 100%;
+        }
+        .glass p {
+            text-align: center;
+            color: #bbb;
+            margin-bottom: 1.2rem;
+            margin-top: 0;
+            width: 100%;
+        }
+        .glass form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            width: 100%;
+            align-items: stretch;
+        }
+        .floating-label {
+            position: relative;
+            margin-bottom: 0.3rem;
+        }
+        .floating-label input[type="email"] {
+            width: 100%;
+            padding: 0.95rem 0.7rem 0.4rem 0.7rem;
+            border-radius: 12px;
+            border: 1.2px solid rgba(162, 89, 255, 0.18);
+            background: rgba(255,255,255,0.13);
+            color: #fff;
+            font-size: 1.04rem;
+            transition: background 0.2s, box-shadow 0.2s, border 0.2s;
+            box-sizing: border-box;
+        }
+        .floating-label input[type="password"],
+        .floating-label input[type="text"] {
+            width: 100%;
+            padding: 0.95rem 2.3rem 0.4rem 0.7rem;
+            border-radius: 12px;
+            border: 1.2px solid rgba(162, 89, 255, 0.18);
+            background: rgba(255,255,255,0.13);
+            color: #fff;
+            font-size: 1.04rem;
+            transition: background 0.2s, box-shadow 0.2s, border 0.2s;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: normal;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 0.98rem;
+            z-index: 2;
+            padding: 2px 4px;
+            border-radius: 50%;
+            transition: background 0.18s, color 0.18s;
+        }
+        .password-toggle:focus,
+        .password-toggle:hover {
+            background: rgba(162, 89, 255, 0.10);
+            color: #a259ff;
+        }
+        .password-toggle span {
+            pointer-events: none;
+        }
+        .floating-label input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.19);
+            box-shadow: 0 0 0 2px #a259ff55;
+            border: 1.2px solid #a259ff;
+        }
+        .floating-label label {
+            position: absolute;
+            left: 0.85rem;
+            top: 0.95rem;
+            color: #bbb;
+            font-size: 1.04rem;
+            pointer-events: none;
+            background: transparent;
+            transition: all 0.18s cubic-bezier(.4,0,.2,1);
+        }
+        .floating-label input:focus + label,
+        .floating-label input:not(:placeholder-shown) + label {
+            top: 0.22rem;
+            left: 0.7rem;
+            font-size: 0.87rem;
+            color: #a259ff;
+            background: rgba(40, 13, 62, 0.85);
+            padding: 0 0.18em;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #5f5fff 0%, #a259ff 100%);
+            border: none;
+            color: #fff;
+            padding: 0.6rem;
+            border-radius: 7px;
+            font-size: 0.97rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.3rem;
+            box-shadow: 0 2px 8px 0 #a259ff33;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+        .btn-primary:hover {
+            opacity: 0.95;
+            box-shadow: 0 4px 16px 0 #a259ff44;
+            transform: translateY(-2px) scale(1.03);
+        }
+        .errorlist {
+            color: #ffb3b3;
+            margin: 0 0 0.3rem 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.92rem;
+        }
+        .errorlist li {
+            display: flex;
+            align-items: center;
+            gap: 0.3em;
+        }
+        .error-icon {
+            font-size: 1em;
+            color: #ff5f8f;
+            margin-right: 0.15em;
+        }
+        .signin-link {
+            text-align: center;
+            margin-top: 1.1rem;
+            font-size: 0.92rem;
+            width: 100%;
+        }
+        @media (max-width: 500px) {
+            .glass {
+                width: 98vw;
+                min-width: 0;
+                padding: 0.7rem 0.2rem;
+                border-radius: 10px;
+            }
+        }
+        
+        /* Enhanced responsive design */
+        @media (max-width: 480px) {
+            .glass {
+                width: 95vw;
+                max-width: 350px;
+                padding: 1.5rem 1rem;
+                margin: 1rem;
+            }
+            
+            .glass h2 {
+                font-size: 1.1rem;
+            }
+            
+            .glass p {
+                font-size: 0.9rem;
+            }
+            
+            .floating-label input {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 1rem 0.7rem 0.4rem 0.7rem;
+            }
+            
+            .btn-primary {
+                padding: 1rem;
+                font-size: 1rem;
+                min-height: 48px;
+            }
+            
+            .password-toggle {
+                right: 0.5rem;
+                font-size: 1.1rem;
+                padding: 4px 6px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .glass {
+                width: 90vw;
+                max-width: 400px;
+                padding: 2rem 1.5rem;
+            }
+        }
+        
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary,
+            .password-toggle {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .glass:hover {
+                transform: none;
+            }
+        }
+        
+        /* Remember Device Checkbox */
+        .remember-device {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        
+        .remember-device input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #a259ff;
+            cursor: pointer;
+        }
+        
+        .remember-device label {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .remember-device:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass fade-in">
+        <h2><span style="font-size:1.5rem;">🔒</span><br>Welcome Back</h2>
+        <p>Sign in to your account</p>
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <ul class="errorlist">
+                {% for error in form.non_field_errors %}
+                    <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            <div class="floating-label">
+                <input type="text" name="username" id="id_username" class="form-control" placeholder=" " value="{{ form.username.value|default:'' }}" required>
+                <label for="id_username">Username or Email</label>
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.username.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="floating-label">
+                <input type="password" name="password" id="id_password" class="form-control" placeholder=" " required>
+                <label for="id_password">Password</label>
+                <button type="button" class="password-toggle" onclick="togglePassword('id_password', this)"><span id="eye_id_password">👁️</span></button>
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                    {% for error in form.password.errors %}
+                        <li><span class="error-icon">&#9888;</span>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="remember-device">
+                <input type="checkbox" id="remember_device" name="remember_device">
+                <label for="remember_device">Remember Device</label>
+            </div>
+            <button type="submit" class="btn-primary">Sign In</button>
+        </form>
+        <div class="signin-link">
+            Don't have an account? <a href="{% url 'signup' %}">Sign Up</a>
+        </div>
+    </div>
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            const eye = btn.querySelector('span');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                eye.textContent = '👁️';
+            }
+        }
+    </script>
+</body>
+</html> 

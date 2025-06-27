@@ -1,0 +1,251 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+
+{% block title %}Delete User - {{ user_to_delete.get_full_name }}{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .delete-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        color: #e0e7ff;
+    }
+    .delete-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .delete-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ef4444;
+        margin-bottom: 0.5rem;
+    }
+    .delete-header p {
+        font-size: 1.1rem;
+        color: #a7b3d9;
+    }
+    .warning-card {
+        background: rgba(239, 68, 68, 0.1);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .warning-icon {
+        font-size: 3rem;
+        color: #ef4444;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .warning-text {
+        color: #ef4444;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .user-info {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .user-info h3 {
+        color: #fff;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        color: #a7b3d9;
+        font-weight: 500;
+    }
+    .info-value {
+        color: #fff;
+        font-weight: 600;
+    }
+    .data-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+    .data-warning h4 {
+        color: #f59e0b;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+    .data-warning p {
+        color: #a7b3d9;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+    .btn-secondary {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+    }
+    .btn-secondary:hover {
+        background-color: rgba(59, 130, 246, 0.4);
+    }
+    .confirmation-form {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .confirmation-form h3 {
+        color: #fff;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 8px;
+    }
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #ef4444;
+    }
+    .checkbox-group label {
+        color: #ef4444;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <header class="delete-header">
+        <h1>⚠️ Delete User Account</h1>
+        <p>This action cannot be undone. Please review carefully before proceeding.</p>
+    </header>
+
+    <div class="warning-card">
+        <div class="warning-icon">🚨</div>
+        <div class="warning-text">PERMANENT DELETION WARNING</div>
+        <p style="text-align: center; color: #a7b3d9; margin: 0;">
+            This will permanently delete the user account and ALL associated data. 
+            This action cannot be undone.
+        </p>
+    </div>
+
+    <div class="user-info">
+        <h3>User Information</h3>
+        <div class="info-row">
+            <span class="info-label">Full Name:</span>
+            <span class="info-value">{{ user_to_delete.get_full_name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Username:</span>
+            <span class="info-value">@{{ user_to_delete.username }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Email:</span>
+            <span class="info-value">{{ user_to_delete.email }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Joined Date:</span>
+            <span class="info-value">{{ user_to_delete.date_joined|date:"F d, Y" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Account Status:</span>
+            <span class="info-value">
+                {% if user_to_delete.is_active %}
+                    <span style="color: #22c55e;">Active</span>
+                {% else %}
+                    <span style="color: #ef4444;">Inactive</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Role:</span>
+            <span class="info-value">
+                {% if user_to_delete.is_staff %}
+                    <span style="color: #FFD700;">Administrator</span>
+                {% else %}
+                    <span style="color: #3b82f6;">User</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="data-warning">
+        <h4>📊 Data That Will Be Deleted:</h4>
+        <p>• {{ related_data.reaction_results|intcomma }} Reaction Test Results</p>
+        <p>• {{ related_data.evade_results|intcomma }} Evade & Sequence Results</p>
+        <p>• {{ related_data.login_history|intcomma }} Login History Records</p>
+        <p>• {{ related_data.device_fingerprints|intcomma }} Device Fingerprints</p>
+        <p>• All user preferences and settings</p>
+    </div>
+
+    <form method="POST" class="confirmation-form">
+        {% csrf_token %}
+        <h3>Final Confirmation</h3>
+        <div class="checkbox-group">
+            <input type="checkbox" id="confirm_delete" name="confirm_delete" value="yes" required>
+            <label for="confirm_delete">
+                I understand that this action is PERMANENT and cannot be undone. 
+                I want to delete this user account and all associated data.
+            </label>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-danger" disabled id="delete-btn">
+                Delete User Account
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Enable delete button only when checkbox is checked
+    document.getElementById('confirm_delete').addEventListener('change', function() {
+        document.getElementById('delete-btn').disabled = !this.checked;
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,851 @@
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% block title %}User Profile{% endblock %}
+
+{% block style %}
+<style>
+    html, body {
+        max-width: 100vw;
+        overflow-x: hidden !important;
+    }
+    .profile-container {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        color: white;
+    }
+    .profile-header {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.18);
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+    .profile-info h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+    .profile-info p {
+        margin: 0.2rem 0;
+        color: #e0e7ff;
+    }
+    
+    /* Game Tabs */
+    .game-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    .game-tab {
+        padding: 1rem 2rem;
+        background: rgba(30, 41, 59, 0.8);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        color: #e0e7ff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .game-tab::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .game-tab:hover::before {
+        left: 100%;
+    }
+
+    .game-tab:hover {
+        background: rgba(162, 89, 255, 0.2);
+        border-color: #a259ff;
+        color: #ffffff;
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15), 0 0 20px rgba(162, 89, 255, 0.3);
+    }
+
+    .game-tab.active {
+        background: #a259ff;
+        color: #ffffff;
+        border-color: #a259ff;
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15), 0 0 20px rgba(162, 89, 255, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .stats-grid {
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: rgba(255, 255, 255, 0.13);
+        padding: 1.5rem;
+        border-radius: 14px;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .stat-card .label {
+        color: #e0e7ff;
+        font-size: 1rem;
+    }
+    
+    .game-content {
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.4s ease;
+    }
+    
+    .game-content.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #ffe066;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .section-title .game-icon {
+        font-size: 1.2rem;
+    }
+    .results-table {
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100vw;
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .results-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .results-table th, .results-table td {
+        padding: 1rem;
+        text-align: left;
+    }
+    .results-table thead {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .results-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .results-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    .chart-container {
+        background: rgba(255, 255, 255, 0.13);
+        padding: 1.5rem;
+        border-radius: 14px;
+        margin-bottom: 2rem;
+    }
+    .no-results {
+        text-align: center;
+        color: #e0e7ff;
+        font-style: italic;
+        padding: 2rem;
+    }
+
+    /* Progress Section */
+    .progress-section {
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .progress-header h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-header p {
+        color: #e0e7ff;
+        font-size: 1rem;
+    }
+
+    .progress-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .progress-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .progress-card:hover {
+        transform: translateY(-4px);
+        background: rgba(162, 89, 255, 0.1);
+        border-color: #a259ff;
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-card h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .progress-card h3 i {
+        color: #a259ff;
+    }
+
+    .progress-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .progress-stat {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+    }
+
+    .progress-stat-label {
+        font-size: 0.8rem;
+        color: #e0e7ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .progress-improvement {
+        text-align: center;
+        padding: 1rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .progress-improvement.improved {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .progress-improvement.declined {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .progress-improvement.no-data {
+        background: rgba(156, 163, 175, 0.2);
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .progress-improvement i {
+        margin-right: 0.5rem;
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    
+    /* Mobile styles */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 0 1rem;
+            margin: 1rem auto;
+        }
+        
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .profile-info h1 {
+            font-size: 1.75rem;
+        }
+        
+        .game-tabs {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .game-tab {
+            padding: 1rem;
+            font-size: 1rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            padding: 1.25rem;
+        }
+        
+        .stat-card .value {
+            font-size: 1.75rem;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive tables */
+        .results-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .results-table table {
+            min-width: 400px;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            padding: 1rem;
+            height: 300px;
+        }
+        
+        /* Progress section */
+        .progress-section {
+            padding: 1.5rem;
+        }
+        
+        .progress-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .progress-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .progress-card {
+            padding: 1rem;
+        }
+        
+        .progress-value {
+            font-size: 1.5rem;
+        }
+        
+        /* Navigation */
+        .nav {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.75rem 1rem;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+    
+    /* Tablet styles */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .profile-container {
+            padding: 0 1.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        
+        .progress-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        
+        .chart-container {
+            height: 350px;
+        }
+    }
+    
+    /* Touch device improvements */
+    @media (hover: none) and (pointer: coarse) {
+        .game-tab,
+        .nav-link {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .game-tab:hover,
+        .nav-link:hover {
+            transform: none;
+        }
+        
+        .stat-card:hover {
+            transform: none;
+        }
+    }
+
+    /* Aggressive mobile fix for horizontal scroll/empty space */
+    @media (max-width: 600px) {
+        [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
+            display: none !important;
+        }
+        html, body {
+            width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-info">
+            <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+            <p>{{ user.email }}</p>
+            <p>Member since {{ user.date_joined|date:"F Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    {% if user_progress %}
+    <div class="progress-section">
+        <div class="progress-header">
+            <h2>Your Progress This Week</h2>
+            <p>Compare your performance with last week</p>
+        </div>
+        <div class="progress-grid">
+            <!-- Reaction Test Progress -->
+            <div class="progress-card">
+                <h3><i class="fas fa-bolt"></i> Reaction Test</h3>
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">This Week</div>
+                        <div class="progress-stat-value">{{ user_progress.reaction.current_week_best|default:"N/A" }} ms</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">Last Week</div>
+                        <div class="progress-stat-value">{{ user_progress.reaction.previous_week_best|default:"N/A" }} ms</div>
+                    </div>
+                </div>
+                <div class="progress-improvement {% if user_progress.reaction.is_improved == True %}improved{% elif user_progress.reaction.is_improved == False %}declined{% else %}no-data{% endif %}">
+                    {% if user_progress.reaction.improvement_ms is not None %}
+                        {% if user_progress.reaction.is_improved %}
+                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.reaction.improvement_ms }}ms ({{ user_progress.reaction.improvement_percent }}%)
+                        {% else %}
+                            <i class="fas fa-arrow-down"></i> Slower by {{ user_progress.reaction.improvement_ms_abs }}ms ({{ user_progress.reaction.improvement_percent_abs }}%)
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-minus"></i> No data available
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Evade & Sequence Progress -->
+            <div class="progress-card">
+                <h3><i class="fas fa-crosshairs"></i> Evade & Sequence</h3>
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">This Week</div>
+                        <div class="progress-stat-value">{{ user_progress.evade.current_week_best|default:"N/A" }}</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">Last Week</div>
+                        <div class="progress-stat-value">{{ user_progress.evade.previous_week_best|default:"N/A" }}</div>
+                    </div>
+                </div>
+                <div class="progress-improvement {% if user_progress.evade.is_improved == True %}improved{% elif user_progress.evade.is_improved == False %}declined{% else %}no-data{% endif %}">
+                    {% if user_progress.evade.improvement_points is not None %}
+                        {% if user_progress.evade.is_improved %}
+                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.evade.improvement_points }} points ({{ user_progress.evade.improvement_percent }}%)
+                        {% else %}
+                            <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.evade.improvement_points_abs }} points ({{ user_progress.evade.improvement_percent_abs }}%)
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-minus"></i> No data available
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Game Tabs -->
+    <div class="game-tabs">
+        <div class="game-tab active" data-game="reaction-test">
+            ⚡ Reaction Test
+        </div>
+        <div class="game-tab" data-game="evade-sequence">
+            🎮 Evade & Sequence
+        </div>
+    </div>
+
+    <!-- Reaction Test Content -->
+    <div class="game-content active" id="reaction-test-content">
+        <h2 class="section-title">
+            <span class="game-icon">⚡</span>
+            Reaction Test Stats
+        </h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="value">{{ reaction_stats.tests_completed|intcomma }}</div>
+                <div class="label">Tests Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ reaction_stats.average_time|floatformat:0|default:"N/A" }} ms</div>
+                <div class="label">Average Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ reaction_stats.best_time|floatformat:0|default:"N/A" }} ms</div>
+                <div class="label">Best Time</div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Performance Over Time</h3>
+        <div class="chart-container">
+            <canvas id="reactionChart"></canvas>
+        </div>
+
+        <h3 class="section-title">Recent Reaction Test Results</h3>
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time (ms)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in recent_reaction_tests %}
+                    <tr>
+                        <td>{{ test.timestamp|date:"F d, Y, P" }}</td>
+                        <td>{{ test.time|floatformat:3 }}s</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="no-results">No reaction test results yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Evade & Sequence Content -->
+    <div class="game-content" id="evade-sequence-content">
+        <h2 class="section-title">
+            <span class="game-icon">🎮</span>
+            Evade & Sequence Stats
+        </h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="value">{{ evade_stats.games_completed|intcomma }}</div>
+                <div class="label">Games Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ evade_stats.average_score|floatformat:0|default:"N/A" }}</div>
+                <div class="label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{ evade_stats.best_score|floatformat:0|default:"N/A" }}</div>
+                <div class="label">Best Score</div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Performance Over Time</h3>
+        <div class="chart-container">
+            <canvas id="evadeChart"></canvas>
+        </div>
+
+        <h3 class="section-title">Recent Evade & Sequence Results</h3>
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in recent_evade_games %}
+                    <tr>
+                        <td>{{ game.timestamp|date:"F d, Y, P" }}</td>
+                        <td>{{ game.score }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="no-results">No evade & sequence results yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h2 class="section-title">Recent Login Activity</h2>
+    <div class="results-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for login in recent_logins %}
+                <tr>
+                    <td>{{ login.timestamp|date:"F d, Y, P" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="1" class="no-results">No login history found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.game-tab');
+        const contents = document.querySelectorAll('.game-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const gameType = this.dataset.game;
+                
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => {
+                    c.classList.remove('active');
+                    c.style.opacity = '0';
+                    c.style.transform = 'translateY(20px)';
+                });
+                
+                // Add active class to clicked tab and corresponding content
+                this.classList.add('active');
+                const targetContent = document.getElementById(gameType + '-content');
+                targetContent.classList.add('active');
+                
+                // Animate content appearance
+                setTimeout(() => {
+                    targetContent.style.opacity = '1';
+                    targetContent.style.transform = 'translateY(0)';
+                }, 100);
+            });
+        });
+    });
+</script>
+
+<nav class="nav">
+    <a href="{% url 'dashboard' %}" class="nav-link">
+        <i class="fas fa-home"></i> Home
+    </a>
+    <!-- Add other nav links here if needed -->
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Reaction Test Chart
+    const reactionCtx = document.getElementById('reactionChart').getContext('2d');
+    const reactionChart = new Chart(reactionCtx, {
+        type: 'line',
+        data: {
+            labels: {{ reaction_chart_labels|safe }},
+            datasets: [{
+                label: 'Reaction Time (ms)',
+                data: {{ reaction_chart_scores|safe }},
+                backgroundColor: 'rgba(255, 224, 102, 0.2)',
+                borderColor: '#ffe066',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+                pointBackgroundColor: '#ffe066',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: '#ffe066',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        color: '#e0e7ff',
+                        callback: function(value) {
+                            return value + ' ms';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#e0e7ff',
+                        maxRotation: 45,
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e0e7ff',
+                        usePointStyle: true,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#e0e7ff',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1,
+                }
+            }
+        }
+    });
+
+    // Evade & Sequence Chart
+    const evadeCtx = document.getElementById('evadeChart').getContext('2d');
+    const evadeChart = new Chart(evadeCtx, {
+        type: 'line',
+        data: {
+            labels: {{ evade_chart_labels|safe }},
+            datasets: [{
+                label: 'Score',
+                data: {{ evade_chart_scores|safe }},
+                backgroundColor: 'rgba(162, 89, 255, 0.2)',
+                borderColor: '#a259ff',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+                pointBackgroundColor: '#a259ff',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: '#a259ff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        color: '#e0e7ff',
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#e0e7ff',
+                        maxRotation: 45,
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e0e7ff',
+                        usePointStyle: true,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#e0e7ff',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1,
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 
