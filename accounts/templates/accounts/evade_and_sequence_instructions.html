@@ -675,81 +675,6 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .content-wrapper {
-                padding: 0.75rem;
-                gap: 1rem;
-            }
-
-            .game-icon {
-                font-size: 3rem;
-            }
-
-            .game-title {
-                font-size: 2rem;
-            }
-
-            .game-subtitle {
-                font-size: 1rem;
-            }
-
-            .instruction-card {
-                padding: 1rem;
-            }
-
-            .card-header h3 {
-                font-size: 1.2rem;
-            }
-
-            .instruction-item {
-                padding: 0.6rem;
-            }
-
-            .instruction-item span:last-child {
-                font-size: 0.9rem;
-            }
-
-            .scoring-section {
-                padding: 1rem;
-            }
-
-            .scoring-header h3 {
-                font-size: 1.2rem;
-            }
-
-            .score-item {
-                padding: 0.6rem;
-            }
-
-            .score-text {
-                font-size: 0.9rem;
-            }
-
-            .score-value {
-                font-size: 0.9rem;
-                padding: 0.3rem 0.6rem;
-            }
-
-            .action-button {
-                font-size: 1rem;
-                padding: 0.8rem 1.5rem;
-                min-width: 140px;
-            }
-
-            .button-text {
-                font-size: 0.95rem;
-            }
-
-            .recommendation {
-                font-size: 0.9rem;
-            }
-
-            .mobile-hint {
-                font-size: 0.8rem;
-                padding: 0.8rem;
-            }
-        }
-
         @media (max-width: 600px) {
             [style*="position: absolute"], .circle-bg, .circle-bg.left, .circle-bg.right {
                 display: none !important;
@@ -761,6 +686,106 @@
                 overflow-x: hidden !important;
                 padding: 0 !important;
                 margin: 0 !important;
+            }
+            .instructions-container {
+                padding: 0.5rem !important;
+            }
+            .content-wrapper {
+                padding: 0.5rem !important;
+                gap: 1rem !important;
+            }
+            .game-header {
+                margin-bottom: 1rem !important;
+            }
+            .game-icon {
+                font-size: 2rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .game-title {
+                font-size: 1.3rem !important;
+            }
+            .game-subtitle {
+                font-size: 0.9rem !important;
+            }
+            .instructions-grid, .scoring-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.75rem !important;
+            }
+            .instruction-card, .scoring-section {
+                padding: 0.75rem !important;
+                border-radius: 12px !important;
+            }
+            .card-header h3, .scoring-header h3 {
+                font-size: 1.1rem !important;
+            }
+            .instruction-item, .score-item {
+                padding: 0.5rem !important;
+                font-size: 0.9rem !important;
+            }
+            .instruction-icon, .score-icon {
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 1rem !important;
+            }
+            .action-buttons {
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+                margin-top: 1rem !important;
+            }
+            .action-button {
+                width: 100% !important;
+                font-size: 1rem !important;
+                padding: 0.9rem 0 !important;
+                min-width: 0 !important;
+                border-radius: 10px !important;
+            }
+            .button-info {
+                margin-top: 0.5rem !important;
+            }
+            .mobile-hint {
+                font-size: 0.85rem !important;
+                padding: 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .instructions-container {
+                padding: 0.25rem !important;
+            }
+            .content-wrapper {
+                padding: 0.25rem !important;
+                gap: 0.5rem !important;
+            }
+            .game-header {
+                margin-bottom: 0.5rem !important;
+            }
+            .game-icon {
+                font-size: 1.1rem !important;
+            }
+            .game-title {
+                font-size: 1.1rem !important;
+            }
+            .game-subtitle {
+                font-size: 0.8rem !important;
+            }
+            .instruction-card, .scoring-section {
+                padding: 0.5rem !important;
+                border-radius: 8px !important;
+            }
+            .card-header h3, .scoring-header h3 {
+                font-size: 1rem !important;
+            }
+            .instruction-item, .score-item {
+                padding: 0.3rem !important;
+                font-size: 0.8rem !important;
+            }
+            .action-button {
+                font-size: 0.95rem !important;
+                padding: 0.7rem 0 !important;
+            }
+            .mobile-hint {
+                font-size: 0.8rem !important;
+                padding: 0.3rem !important;
             }
         }
 

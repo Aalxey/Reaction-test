@@ -121,6 +121,12 @@
             {% else %}
                 <p class="ranked-status practice">Practice Mode</p>
                 <p class="ranked-info">This will not affect your rank.</p>
+                {% if next_ranked_attempt_time %}
+                    <p class="ranked-info">
+                        Next ranked attempt available at:
+                        {{ next_ranked_attempt_time|date:"M d, Y h:i A" }}
+                    </p>
+                {% endif %}
             {% endif %}
         </div>
         
@@ -187,8 +193,7 @@
         }
 
         function runGame() {
-            tryCount++;
-            if (tryCount > totalTries) {
+            if (tryCount >= totalTries) {
                 saveAverageScore();
                 return;
             }
@@ -196,7 +201,7 @@
             gameBox.className = 'game-box red';
             resultScreen.style.display = 'none';
             startScreen.style.display = 'block';
-            startTitle.textContent = `Get Ready for Try #${tryCount}`;
+            startTitle.textContent = `Get Ready for Try #${tryCount + 1}`;
             startSubtitle.textContent = 'Wait for green...';
 
             timer = setTimeout(() => {
@@ -210,6 +215,7 @@
                 endTime = new Date();
                 const reactionTime = endTime - startTime;
                 scores.push(reactionTime);
+                tryCount++;
                 showResult(reactionTime);
                 gameBox.className = 'game-box blue';
                 setTimeout(runGame, 2000);

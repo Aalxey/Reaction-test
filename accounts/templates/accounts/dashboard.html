@@ -171,20 +171,80 @@
             width: 100vw !important;
             min-width: 0 !important;
             max-width: 100vw !important;
-            padding: 0 !important;
+            padding: 1rem !important;
             margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+        .welcome-header {
+            padding: 1rem 0 !important;
+            margin-bottom: 2rem !important;
+        }
+        .welcome-header h1 {
+            font-size: 1.8rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        .welcome-header p {
+            font-size: 1rem !important;
+        }
+        .section-title {
+            font-size: 1.4rem !important;
+            margin-bottom: 1rem !important;
         }
         .games-grid, .stats-grid {
-            width: 100vw !important;
+            width: 100% !important;
             min-width: 0 !important;
-            max-width: 100vw !important;
+            max-width: 100% !important;
             grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+            margin-bottom: 2rem !important;
         }
         .game-card, .stat-card {
             width: 100% !important;
             min-width: 0 !important;
-            max-width: 100vw !important;
+            max-width: 100% !important;
             box-sizing: border-box !important;
+            padding: 1rem !important;
+        }
+        .game-card h3 {
+            font-size: 1.3rem !important;
+        }
+        .game-card p {
+            font-size: 0.9rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .stat-card .value {
+            font-size: 1.5rem !important;
+        }
+        .stat-card .label {
+            font-size: 0.75rem !important;
+        }
+        .account-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        .account-links {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+        }
+        .account-link {
+            text-align: center !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.9rem !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .dashboard-container {
+            padding: 0.75rem !important;
+        }
+        .welcome-header h1 {
+            font-size: 1.6rem !important;
+        }
+        .section-title {
+            font-size: 1.3rem !important;
+        }
+        .game-card, .stat-card {
+            padding: 0.75rem !important;
         }
     }
 </style>
@@ -215,7 +275,7 @@
 
     <h2 class="section-title">All Games</h2>
     <div class="games-grid">
-        <a href="{% url 'reaction_test' %}" class="game-card">
+        <a href="{% url 'rank_status' %}" class="game-card">
             <h3>Reaction Test</h3>
             <p>Test your visual reflexes. Click the box the moment it turns green. Three tries to get your best score on the leaderboard!</p>
             <div class="play-btn">Play Now</div>

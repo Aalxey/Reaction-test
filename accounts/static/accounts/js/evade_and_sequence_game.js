@@ -343,6 +343,18 @@
             const dy = centerY - this.enemyPosition.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
+            // --- Updated collision logic ---
+            // Get radii of player and enemy dots (assume both are 20px diameter by default)
+            const playerDot = this.playerDot || { offsetWidth: 20 };
+            const enemyDot = this.enemyDot || { offsetWidth: 20 };
+            const playerRadius = playerDot.offsetWidth ? playerDot.offsetWidth / 2 : 10;
+            const enemyRadius = enemyDot.offsetWidth ? enemyDot.offsetWidth / 2 : 10;
+            const collisionDistance = playerRadius + enemyRadius;
+            
+            if (distance < collisionDistance) {
+                this.gameOver('Enemy caught you!');
+            }
+            
             if (distance > 0) {
                 this.enemyPosition.x += (dx / distance) * this.enemySpeed;
                 this.enemyPosition.y += (dy / distance) * this.enemySpeed;
@@ -350,11 +362,6 @@
             
             this.updateEnemyPosition();
             this.checkEnemyRange();
-            
-            // Check if enemy reached player
-            if (distance < 10) {
-                this.gameOver('Enemy caught you!');
-            }
         }, 16); // ~60 FPS
     }
     
@@ -408,12 +415,14 @@
         if (this.numberSpawnInterval) {
             clearInterval(this.numberSpawnInterval);
         }
-        
         // Ensure the game area is clear before starting
         this.gameArea.innerHTML = '';
         this.activeNumbers = [];
+        this.spawnNumberSet();
+    }
 
-        // Spawn all numbers from 1 to 5 at the beginning
+    spawnNumberSet() {
+        this.currentSequenceIndex = 0;
         for (let i = 1; i <= 5; i++) {
             this.spawnNumber(i);
         }
@@ -423,71 +432,87 @@
         if (!this.gameActive || this.gamePaused) {
             return;
         }
-
         // Avoid re-spawning a number that is somehow still active
         if (this.activeNumbers.some(n => n.value === numberValue)) {
             return;
         }
-        
         const number = document.createElement('div');
         number.className = 'target-number';
         number.textContent = numberValue;
         number.dataset.value = numberValue;
-        
         this.updateNumberHighlight(number);
-
         const position = this.findNonOverlappingPosition();
         if (!position) {
-            // If we can't find a spot, try again shortly
             setTimeout(() => this.spawnNumber(numberValue), 100);
             return;
         }
-        
         number.style.left = position.x + 'px';
         number.style.top = position.y + 'px';
-        
         number.addEventListener('click', () => this.handleNumberClick(number));
-        
         this.gameArea.appendChild(number);
-        
         this.activeNumbers.push({
             element: number,
             position: position,
             value: numberValue
         });
-        
         this.updateUI();
     }
     
     findNonOverlappingPosition() {
         const maxAttempts = 50;
         let attempts = 0;
-        
         while (attempts < maxAttempts) {
             const position = this.getRandomPosition();
-            
-            // Check if this position overlaps with any existing numbers
+            // Check overlap with other numbers
             const overlaps = this.activeNumbers.some(activeNumber => {
                 const distance = Math.sqrt(
                     Math.pow(position.x - activeNumber.position.x, 2) + 
                     Math.pow(position.y - activeNumber.position.y, 2)
                 );
-                // Minimum distance between number centers (number size + buffer)
                 const minDistance = this.isMobile ? 80 : 100;
                 return distance < minDistance;
             });
-            
-            if (!overlaps) {
+            // Check overlap with minimap and evade button
+            if (!overlaps && !this.overlapsWithUI(position)) {
                 return position;
             }
-            
             attempts++;
         }
-        
-        // If no non-overlapping position found, return null
         return null;
     }
-    
+
+    overlapsWithUI(position) {
+        // Minimap
+        if (this.minimap) {
+            const rect = this.minimap.getBoundingClientRect();
+            if (this.positionOverlapsRect(position, rect, 70)) return true;
+        }
+        // Evade button
+        if (this.evadeButton) {
+            const rect = this.evadeButton.getBoundingClientRect();
+            if (this.positionOverlapsRect(position, rect, 70)) return true;
+        }
+        return false;
+    }
+
+    positionOverlapsRect(position, rect, size) {
+        // size: diameter of number
+        const numberLeft = position.x;
+        const numberRight = position.x + size;
+        const numberTop = position.y;
+        const numberBottom = position.y + size;
+        const rectLeft = rect.left - this.gameArea.getBoundingClientRect().left;
+        const rectRight = rect.right - this.gameArea.getBoundingClientRect().left;
+        const rectTop = rect.top - this.gameArea.getBoundingClientRect().top;
+        const rectBottom = rect.bottom - this.gameArea.getBoundingClientRect().top;
+        return (
+            numberRight > rectLeft &&
+            numberLeft < rectRight &&
+            numberBottom > rectTop &&
+            numberTop < rectBottom
+        );
+    }
+
     getRandomPosition() {
         console.log('getRandomPosition() called');
         
@@ -557,40 +582,28 @@
 
     handleNumberClick(number) {
         if (this.gamePaused) return;
-
         const clickedValue = parseInt(number.dataset.value);
-
-        // Prevent interaction with already-fading numbers
         if (number.style.opacity === '0') return;
-
         if (clickedValue === this.expectedNumbers[this.currentSequenceIndex]) {
-            // Correct number clicked
             this.score += 10;
             this.currentSequenceIndex++;
-            
             this.difficulty.consecutiveCorrect++;
             this.difficulty.consecutiveMisses = 0;
-
             number.style.transform = 'scale(0)';
             number.style.opacity = '0';
-            
             this.removeFromActiveNumbers(number);
-            
             setTimeout(() => {
                 if (number.parentNode) number.remove();
-                this.spawnNumber(clickedValue); // Respawn the clicked number
+                // Do not respawn the clicked number
+                if (this.activeNumbers.length === 0) {
+                    this.score += 50;
+                    this.spawnNumberSet();
+                }
             }, 300);
-            
-            if (this.currentSequenceIndex >= this.expectedNumbers.length) {
-                this.currentSequenceIndex = 0;
-                this.score += 50;
-            }
-            
             this.updateAllNumberHighlights();
         } else {
             this.handleNumberMiss(number);
         }
-        
         this.adjustDifficulty();
         this.updateUI();
     }
@@ -599,23 +612,20 @@
         const missedValue = parseInt(number.dataset.value);
         this.misses++;
         this.gameContainer.classList.add('shake');
-        
         this.difficulty.consecutiveMisses++;
         this.difficulty.consecutiveCorrect = 0;
-        
         number.style.opacity = '0';
-        
         this.removeFromActiveNumbers(number);
-        
         setTimeout(() => {
             if (number.parentNode) number.remove();
             this.gameContainer.classList.remove('shake');
-            this.spawnNumber(missedValue); // Respawn the missed number
+            // Do not respawn the missed number
+            if (this.activeNumbers.length === 0) {
+                this.spawnNumberSet();
+            }
         }, 300);
-        
         this.adjustDifficulty();
         this.updateUI();
-        
         if (this.misses >= 3) {
             this.gameOver('Too many misses!');
         }

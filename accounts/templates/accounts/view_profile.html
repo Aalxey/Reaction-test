@@ -39,8 +39,13 @@
     
     .user-info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
+    }
+    
+    .user-info-card h3 {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 1rem;
     }
     
     .info-item {
@@ -315,14 +320,32 @@
     </header>
 
     <div class="user-info-card">
+        <h3 style="margin: 0 0 1.5rem 0; color: #fff; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-user" style="color: #a259ff;"></i> User Details
+        </h3>
         <div class="user-info-grid">
             <div class="info-item">
-                <div class="info-label">Member Since</div>
-                <div class="info-value">{{ profile_user.date_joined|date:"M Y" }}</div>
+                <div class="info-label">Username</div>
+                <div class="info-value">@{{ profile_user.username }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Email (Gmail)</div>
+                <div class="info-value">{{ profile_user.email }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Password</div>
+                <div class="info-value">
+                    <span style="color: #a7b3d9; font-family: monospace;">••••••••</span>
+                    <small style="color: #a7b3d9; display: block; margin-top: 0.25rem;">(Hidden for security)</small>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Date Joined</div>
+                <div class="info-value">{{ profile_user.date_joined|date:"M d, Y H:i" }}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Last Login</div>
-                <div class="info-value">{{ profile_user.last_login|date:"M d, Y"|default:"Never" }}</div>
+                <div class="info-value">{{ profile_user.last_login|date:"M d, Y H:i"|default:"Never" }}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Account Status</div>
@@ -343,6 +366,14 @@
                         <span style="color: #3b82f6;">User</span>
                     {% endif %}
                 </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">First Name</div>
+                <div class="info-value">{{ profile_user.first_name|default:"Not provided" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Last Name</div>
+                <div class="info-value">{{ profile_user.last_name|default:"Not provided" }}</div>
             </div>
         </div>
     </div>
@@ -366,6 +397,33 @@
                 <span class="stat-value">{{ avg_reaction_time|floatformat:3 }}s</span>
             </div>
             {% endif %}
+            
+            <!-- Improvement Indicator -->
+            {% if reaction_improvement is not None %}
+            <div class="stat-item">
+                <span class="stat-label">7-Day Performance</span>
+                <span class="stat-value">
+                    {% if reaction_improvement %}
+                        <span style="color: #22c55e;"><i class="fas fa-arrow-up"></i> Improvement by {{ reaction_improvement_amount|floatformat:1 }}ms</span>
+                    {% else %}
+                        {% if reaction_improvement_amount > 0 %}
+                            <span style="color: #ef4444;"><i class="fas fa-arrow-down"></i> No Improvement – Decreased by {{ reaction_improvement_amount|floatformat:1 }}ms</span>
+                        {% else %}
+                            <span style="color: #f59e0b;"><i class="fas fa-minus"></i> No Change</span>
+                        {% endif %}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Current Week Avg</span>
+                <span class="stat-value">{{ current_week_reaction_avg|floatformat:3 }}s</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Previous Week Avg</span>
+                <span class="stat-value">{{ previous_week_reaction_avg|floatformat:3 }}s</span>
+            </div>
+            {% endif %}
+            
             {% if not best_reaction %}
             <div class="no-data">No reaction test data available</div>
             {% endif %}
@@ -389,6 +447,33 @@
                 <span class="stat-value">{{ avg_evade_score|floatformat:1 }}</span>
             </div>
             {% endif %}
+            
+            <!-- Improvement Indicator -->
+            {% if evade_improvement is not None %}
+            <div class="stat-item">
+                <span class="stat-label">7-Day Performance</span>
+                <span class="stat-value">
+                    {% if evade_improvement %}
+                        <span style="color: #22c55e;"><i class="fas fa-arrow-up"></i> Improvement by {{ evade_improvement_amount|floatformat:1 }} points</span>
+                    {% else %}
+                        {% if evade_improvement_amount > 0 %}
+                            <span style="color: #ef4444;"><i class="fas fa-arrow-down"></i> No Improvement – Decreased by {{ evade_improvement_amount|floatformat:1 }} points</span>
+                        {% else %}
+                            <span style="color: #f59e0b;"><i class="fas fa-minus"></i> No Change</span>
+                        {% endif %}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Current Week Avg</span>
+                <span class="stat-value">{{ current_week_evade_avg|floatformat:1 }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Previous Week Avg</span>
+                <span class="stat-value">{{ previous_week_evade_avg|floatformat:1 }}</span>
+            </div>
+            {% endif %}
+            
             {% if not best_evade %}
             <div class="no-data">No evade game data available</div>
             {% endif %}

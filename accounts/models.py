@@ -11,6 +11,7 @@ class ReactionTestResult(models.Model):
     time = models.FloatField()  # Time in seconds
     timestamp = models.DateTimeField(auto_now_add=True)
     is_for_leaderboard = models.BooleanField(default=True)
+    ranked_attempt_timestamp = models.DateTimeField(null=True, blank=True)  # When this ranked attempt was made
 
     def __str__(self):
         return f'{self.user.username} - {self.time:.3f}s'

@@ -329,7 +329,8 @@ def leaderboard_view(request):
     now = timezone.now()
     
     if time_filter == 'day':
-        start_date = now - timedelta(days=1)
+        # Set start_date to midnight of the current day
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     elif time_filter == 'week':
         start_date = now - timedelta(weeks=1)
     else:  # 'all' or any other value
@@ -422,12 +423,15 @@ def leaderboard_view(request):
     for rank, score in enumerate(reaction_test_best_scores[:100], 1):
         user = reaction_test_users.get(score['user'])
         if user:
+            # Find the ReactionTestResult with this user's best_time
+            best_result = ReactionTestResult.objects.filter(user=user, is_for_leaderboard=True, time=score['best_time']).order_by('timestamp').first()
             reaction_test_leaderboard.append({
                 'rank': rank,
                 'user_id': user.id,
                 'name': f"{user.first_name} {user.last_name}",
                 'username': user.username,
                 'best_time': int(score['best_time'] * 1000),
+                'timestamp': best_result.timestamp if best_result else None,
             })
     
     # Reaction Test stats
@@ -471,12 +475,15 @@ def leaderboard_view(request):
     for rank, score in enumerate(evade_sequence_best_scores[:100], 1):
         user = evade_sequence_users.get(score['user'])
         if user:
+            # Find the EvadeAndSequenceResult with this user's best_score
+            best_result = EvadeAndSequenceResult.objects.filter(user=user, score=score['best_score']).order_by('timestamp').first()
             evade_sequence_leaderboard.append({
                 'rank': rank,
                 'user_id': user.id,
                 'name': f"{user.first_name} {user.last_name}",
                 'username': user.username,
                 'best_score': score['best_score'],
+                'timestamp': best_result.timestamp if best_result else None,
             })
     
     # Evade & Sequence stats
@@ -787,6 +794,56 @@ def view_profile_view(request, user_id):
     # Recent activity
     recent_logins = LoginHistory.objects.filter(user=profile_user).order_by('-timestamp')[:5]
     
+    # Calculate improvement over last 7 days vs previous week
+    from datetime import timedelta
+    now = timezone.now()
+    
+    # Current week (last 7 days)
+    current_week_start = now - timedelta(days=7)
+    # Previous week (7 days before that)
+    previous_week_start = now - timedelta(days=14)
+    previous_week_end = current_week_start
+    
+    # Reaction Test Improvement
+    current_week_reaction = ReactionTestResult.objects.filter(
+        user=profile_user,
+        timestamp__gte=current_week_start
+    ).aggregate(avg_time=Avg('time'))
+    
+    previous_week_reaction = ReactionTestResult.objects.filter(
+        user=profile_user,
+        timestamp__gte=previous_week_start,
+        timestamp__lt=previous_week_end
+    ).aggregate(avg_time=Avg('time'))
+    
+    reaction_improvement = None
+    reaction_improvement_amount = None
+    if current_week_reaction['avg_time'] and previous_week_reaction['avg_time']:
+        # Lower time is better for reaction test
+        improvement_ms = (previous_week_reaction['avg_time'] - current_week_reaction['avg_time']) * 1000
+        reaction_improvement = improvement_ms > 0
+        reaction_improvement_amount = abs(improvement_ms)
+    
+    # Evade & Sequence Improvement
+    current_week_evade = EvadeAndSequenceResult.objects.filter(
+        user=profile_user,
+        timestamp__gte=current_week_start
+    ).aggregate(avg_score=Avg('score'))
+    
+    previous_week_evade = EvadeAndSequenceResult.objects.filter(
+        user=profile_user,
+        timestamp__gte=previous_week_start,
+        timestamp__lt=previous_week_end
+    ).aggregate(avg_score=Avg('score'))
+    
+    evade_improvement = None
+    evade_improvement_amount = None
+    if current_week_evade['avg_score'] and previous_week_evade['avg_score']:
+        # Higher score is better for evade & sequence
+        improvement_points = current_week_evade['avg_score'] - previous_week_evade['avg_score']
+        evade_improvement = improvement_points > 0
+        evade_improvement_amount = abs(improvement_points)
+    
     context = {
         'profile_user': profile_user,
         'reaction_results': reaction_results,
@@ -804,17 +861,39 @@ def view_profile_view(request, user_id):
         'reaction_chart_scores': json.dumps(reaction_chart_scores),
         'evade_chart_labels': json.dumps(evade_chart_labels),
         'evade_chart_scores': json.dumps(evade_chart_scores),
+        'reaction_improvement': reaction_improvement,
+        'reaction_improvement_amount': reaction_improvement_amount,
+        'evade_improvement': evade_improvement,
+        'evade_improvement_amount': evade_improvement_amount,
+        'current_week_reaction_avg': current_week_reaction['avg_time'],
+        'previous_week_reaction_avg': previous_week_reaction['avg_time'],
+        'current_week_evade_avg': current_week_evade['avg_score'],
+        'previous_week_evade_avg': previous_week_evade['avg_score'],
     }
     return render(request, 'accounts/view_profile.html', context)
 
 @login_required
 def reaction_test_view(request):
-    ranked_attempts_count = ReactionTestResult.objects.filter(
+    # Check how many ranked attempts the user has (excluding expired ones)
+    from datetime import timedelta
+    cutoff_time = timezone.now() - timedelta(hours=24)
+    
+    recent_ranked_attempts = ReactionTestResult.objects.filter(
         user=request.user, 
-        is_for_leaderboard=True
-    ).count()
+        is_for_leaderboard=True,
+        ranked_attempt_timestamp__gte=cutoff_time
+    ).order_by('ranked_attempt_timestamp')
+    ranked_attempts_count = recent_ranked_attempts.count()
+
+    next_ranked_attempt_time = None
+    if ranked_attempts_count >= 3:
+        # The earliest of the last 3 attempts will expire first
+        third_earliest = recent_ranked_attempts[0]
+        next_ranked_attempt_time = third_earliest.ranked_attempt_timestamp + timedelta(hours=24)
+
     context = {
-        'ranked_attempts_count': ranked_attempts_count
+        'ranked_attempts_count': ranked_attempts_count,
+        'next_ranked_attempt_time': next_ranked_attempt_time,
     }
     return render(request, 'accounts/reaction_test.html', context)
 
@@ -827,10 +906,14 @@ def save_score_view(request):
             scores = data.get('scores', [])
 
             if time is not None:
-                # Check how many ranked attempts the user has
+                # Check how many ranked attempts the user has (excluding expired ones)
+                from datetime import timedelta
+                cutoff_time = timezone.now() - timedelta(hours=24)
+                
                 ranked_attempts_count = ReactionTestResult.objects.filter(
                     user=request.user, 
-                    is_for_leaderboard=True
+                    is_for_leaderboard=True,
+                    ranked_attempt_timestamp__gte=cutoff_time
                 ).count()
 
                 is_ranked = ranked_attempts_count < 3
@@ -839,7 +922,8 @@ def save_score_view(request):
                 ReactionTestResult.objects.create(
                     user=request.user, 
                     time=time_seconds,
-                    is_for_leaderboard=is_ranked
+                    is_for_leaderboard=is_ranked,
+                    ranked_attempt_timestamp=timezone.now() if is_ranked else None
                 )
 
                 # Store session data for the result page
@@ -1144,3 +1228,32 @@ def debug_online_status_view(request):
         return JsonResponse(debug_data)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@login_required
+def rank_status_view(request):
+    # Get the user's most recent ranked attempt
+    last_ranked = ReactionTestResult.objects.filter(
+        user=request.user,
+        is_for_leaderboard=True,
+        ranked_attempt_timestamp__isnull=False
+    ).order_by('-ranked_attempt_timestamp').first()
+
+    can_play_ranked = True
+    wait_hours = wait_minutes = 0
+    time_until_next_ranked = None
+
+    if last_ranked:
+        time_since_last = timezone.now() - last_ranked.ranked_attempt_timestamp
+        if time_since_last < timedelta(hours=24):
+            can_play_ranked = False
+            time_until_next_ranked = timedelta(hours=24) - time_since_last
+            wait_hours = time_until_next_ranked.seconds // 3600
+            wait_minutes = (time_until_next_ranked.seconds % 3600) // 60
+
+    context = {
+        'can_play_ranked': can_play_ranked,
+        'wait_hours': wait_hours,
+        'wait_minutes': wait_minutes,
+        'time_until_next_ranked': time_until_next_ranked,
+    }
+    return render(request, 'accounts/rank_status.html', context)

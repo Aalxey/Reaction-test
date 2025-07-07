@@ -1074,6 +1074,7 @@
                                 <th>Rank</th>
                                 <th>Player</th>
                                 <th>Best Time (ms)</th>
+                                <th>Time</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1087,6 +1088,7 @@
                                     </div>
                                 </td>
                                 <td>{{ player.best_time }}</td>
+                                <td>{% if player.timestamp %}{{ player.timestamp|date:'M d, Y h:i A' }}{% else %}-{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -1145,6 +1147,7 @@
                                 <th>Rank</th>
                                 <th>Player</th>
                                 <th>Best Score</th>
+                                <th>Time</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1158,6 +1161,7 @@
                                     </div>
                                 </td>
                                 <td>{{ player.best_score }}</td>
+                                <td>{% if player.timestamp %}{{ player.timestamp|date:'M d, Y h:i A' }}{% else %}-{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

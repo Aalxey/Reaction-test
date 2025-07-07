@@ -200,6 +200,151 @@
             padding: 0 !important;
             margin: 0 !important;
         }
+        
+        .admin-container {
+            padding: 1rem !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        
+        .admin-header {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .admin-header h1 {
+            font-size: 1.8rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .admin-header p {
+            font-size: 0.9rem !important;
+        }
+        
+        .nav {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .nav-right {
+            flex-wrap: wrap !important;
+            gap: 0.75rem !important;
+            justify-content: center !important;
+        }
+        
+        .nav-link {
+            font-size: 0.9rem !important;
+            padding: 0.75rem 1rem !important;
+            min-height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .stat-card {
+            padding: 1rem !important;
+        }
+        
+        .stat-card .value {
+            font-size: 1.5rem !important;
+        }
+        
+        .stat-card .label {
+            font-size: 0.8rem !important;
+        }
+        
+        .user-table-container {
+            padding: 0 !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .table-header h2 {
+            font-size: 1.3rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .user-table-container table {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            border-radius: 8px !important;
+        }
+        
+        .user-table-container table {
+            min-width: 600px !important;
+        }
+        
+        .user-table-container th,
+        .user-table-container td {
+            padding: 0.5rem 0.25rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        .user-info-cell {
+            flex-direction: column !important;
+            gap: 0.25rem !important;
+        }
+        
+        .user-name {
+            font-size: 0.9rem !important;
+        }
+        
+        .user-username {
+            font-size: 0.75rem !important;
+        }
+        
+        .action-btn,
+        .action-btn-danger {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.75rem !important;
+            margin: 0.1rem !important;
+        }
+        
+        .pagination {
+            padding: 1rem !important;
+            text-align: center !important;
+        }
+        
+        .pagination a {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            margin: 0.25rem !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .admin-container {
+            padding: 0.75rem !important;
+        }
+        
+        .admin-header h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        .stat-card .value {
+            font-size: 1.3rem !important;
+        }
+        
+        .user-table-container th,
+        .user-table-container td {
+            padding: 0.4rem 0.2rem !important;
+            font-size: 0.75rem !important;
+        }
+        
+        .action-btn,
+        .action-btn-danger {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.7rem !important;
+        }
     }
 </style>
 {% endblock %}

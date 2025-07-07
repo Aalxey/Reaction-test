@@ -6,8 +6,11 @@
 {% block content %}
 <style>
     html, body {
-        max-width: 100vw;
+        width: 100%;
+        max-width: 100%;
         overflow-x: hidden !important;
+        margin: 0;
+        padding: 0;
     }
     
     .main-header { display: none; } /* Fullscreen */
@@ -39,12 +42,13 @@
     
     .warning-container {
         width: 100%;
-        max-width: 100vw;
+        max-width: 100%;
         overflow-x: hidden;
         margin: 0 auto;
         padding: 2rem;
         position: relative;
         z-index: 1;
+        box-sizing: border-box;
     }
     
     .warning-header {
@@ -94,9 +98,10 @@
         margin-bottom: 2rem;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        overflow-x: auto;
         width: 100%;
-        max-width: 100vw;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
     }
     
     .warning-section:hover {
@@ -142,9 +147,9 @@
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 2rem;
         margin-bottom: 2rem;
-        overflow-x: auto;
         width: 100%;
-        max-width: 100vw;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     .task-card {
@@ -155,6 +160,8 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .task-card::before {
@@ -446,48 +453,275 @@
     /* Responsive Design */
     @media (max-width: 768px) {
         .warning-container {
-            padding: 1.5rem;
+            padding: 1rem;
+        }
+        
+        .warning-header {
+            margin-bottom: 2rem;
+        }
+        
+        .warning-title {
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            margin-bottom: 0.75rem;
+        }
+        
+        .warning-subtitle {
+            font-size: 1rem;
+            line-height: 1.5;
         }
         
         .warning-section {
-            padding: 1.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+        }
+        
+        .warning-section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
         }
         
         .tasks-grid {
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .task-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
+        .task-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .task-list {
+            padding-left: 1.25rem;
+            line-height: 1.6;
+        }
+        
+        .task-list li {
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
         }
         
         .scoring-grid {
             grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        
+        .scoring-item {
+            padding: 0.75rem;
+            border-radius: 10px;
+        }
+        
+        .scoring-text {
+            font-size: 0.9rem;
+        }
+        
+        .preparation-grid {
+            gap: 1rem;
+        }
+        
+        .prep-item {
+            padding: 1.25rem;
+            border-radius: 12px;
+        }
+        
+        .prep-item h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .prep-item p {
+            font-size: 0.9rem;
+        }
+        
+        .checklist-list {
+            padding-left: 1.25rem;
+            line-height: 1.6;
+        }
+        
+        .checklist-list li {
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+        
+        .challenge-note {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
+        .challenge-note p {
+            font-size: 1rem;
+            line-height: 1.5;
         }
         
         .action-buttons {
             flex-direction: column;
             align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
         }
         
         .btn {
             width: 100%;
-            max-width: 300px;
+            max-width: 280px;
+            padding: 0.875rem 1.5rem;
+            font-size: 0.95rem;
+            min-width: auto;
         }
     }
     
     @media (max-width: 480px) {
         .warning-container {
-            padding: 1rem;
+            padding: 0.75rem;
         }
         
-        .warning-section {
-            padding: 1.25rem;
+        .warning-header {
+            margin-bottom: 1.5rem;
         }
         
         .warning-title {
-            font-size: 2rem;
+            font-size: 1.6rem;
         }
         
         .warning-subtitle {
+            font-size: 0.9rem;
+        }
+        
+        .warning-section {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .warning-section-title {
+            font-size: 1.25rem;
+        }
+        
+        .task-card {
+            padding: 1.25rem;
+        }
+        
+        .task-card h3 {
+            font-size: 1.1rem;
+        }
+        
+        .task-list li {
+            font-size: 0.85rem;
+        }
+        
+        .scoring-item {
+            padding: 0.625rem;
+        }
+        
+        .scoring-text {
+            font-size: 0.85rem;
+        }
+        
+        .prep-item {
+            padding: 1rem;
+        }
+        
+        .prep-item h4 {
             font-size: 1rem;
+        }
+        
+        .prep-item p {
+            font-size: 0.85rem;
+        }
+        
+        .checklist-list li {
+            font-size: 0.85rem;
+        }
+        
+        .challenge-note {
+            padding: 1.25rem;
+        }
+        
+        .challenge-note p {
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            max-width: 260px;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .warning-container {
+            padding: 0.5rem;
+        }
+        
+        .warning-title {
+            font-size: 1.4rem;
+        }
+        
+        .warning-subtitle {
+            font-size: 0.8rem;
+        }
+        
+        .warning-section {
+            padding: 0.875rem;
+        }
+        
+        .warning-section-title {
+            font-size: 1.1rem;
+        }
+        
+        .task-card {
+            padding: 1rem;
+        }
+        
+        .task-card h3 {
+            font-size: 1rem;
+        }
+        
+        .task-list li {
+            font-size: 0.8rem;
+        }
+        
+        .scoring-item {
+            padding: 0.5rem;
+        }
+        
+        .scoring-text {
+            font-size: 0.8rem;
+        }
+        
+        .prep-item {
+            padding: 0.875rem;
+        }
+        
+        .prep-item h4 {
+            font-size: 0.9rem;
+        }
+        
+        .prep-item p {
+            font-size: 0.8rem;
+        }
+        
+        .checklist-list li {
+            font-size: 0.8rem;
+        }
+        
+        .challenge-note {
+            padding: 1rem;
+        }
+        
+        .challenge-note p {
+            font-size: 0.85rem;
+        }
+        
+        .btn {
+            padding: 0.625rem 1rem;
+            font-size: 0.85rem;
+            max-width: 240px;
         }
     }
     
@@ -496,12 +730,35 @@
             display: none !important;
         }
         html, body {
-            width: 100vw !important;
+            width: 100% !important;
             min-width: 0 !important;
-            max-width: 100vw !important;
+            max-width: 100% !important;
             overflow-x: hidden !important;
             padding: 0 !important;
             margin: 0 !important;
+        }
+        
+        .warning-container {
+            padding: 1rem;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .warning-section {
+            width: 100%;
+            max-width: 100%;
+            padding: 1.25rem;
+        }
+        
+        .tasks-grid {
+            width: 100%;
+            max-width: 100%;
+            grid-template-columns: 1fr;
+        }
+        
+        .task-card {
+            width: 100%;
+            max-width: 100%;
         }
     }
 </style>
@@ -514,48 +771,62 @@
         </header>
 
         <section class="warning-section">
-            <h2 class="warning-section-title overview">🎯 Game Overview</h2>
-            <p style="line-height: 1.7; color: #cbd5e1; font-size: 1.1rem;">
-                This is a <strong>dual-task challenge</strong> that requires you to simultaneously perform two different tasks: 
-                clicking numbers in sequence and evading an approaching enemy. The game adapts to your skill level, 
-                starting easy but becoming progressively more challenging as you improve.
+            <h2 class="warning-section-title overview">🎯 What You'll Be Doing</h2>
+            <p style="line-height: 1.7; color: #cbd5e1; font-size: 1.1rem; margin-bottom: 1.5rem;">
+                You'll be doing <strong>two things at the same time</strong> - like patting your head and rubbing your tummy! 
+                Don't worry, it starts easy and gets harder as you get better.
             </p>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="color: #3b82f6; margin-bottom: 1rem; font-size: 1.2rem;">💡 Pro Tip</h3>
+                <p style="color: #cbd5e1; margin: 0; font-size: 1rem;">
+                    <strong>Focus on one task at a time</strong> - start with the numbers, then check the minimap, then back to numbers. 
+                    You'll get the hang of it quickly!
+                </p>
+            </div>
         </section>
 
         <div class="tasks-grid">
             <div class="task-card sequence">
-                <h3>📊 Sequence Task</h3>
+                <h3>📊 Task 1: Click Numbers</h3>
+                <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.95rem;">
+                    <strong>Simple:</strong> Click numbers 1, 2, 3, 4, 5 in order
+                </p>
                 <ul class="task-list">
-                    <li>Numbers 1-5 spawn randomly on screen</li>
-                    <li>Click them in ascending order: 1→2→3→4→5</li>
-                    <li>Yellow highlight shows the next number to click</li>
-                    <li>Complete full sequences for bonus points</li>
-                    <li>Wrong numbers or timeouts count as misses</li>
+                    <li>Numbers 1-5 appear on screen</li>
+                    <li>Click them in order: 1 → 2 → 3 → 4 → 5</li>
+                    <li>The next number glows yellow</li>
+                    <li>Complete the set for bonus points!</li>
                 </ul>
             </div>
             
             <div class="task-card evasion">
-                <h3>⚡ Evasion Task</h3>
+                <h3>⚡ Task 2: Watch for Enemies</h3>
+                <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.95rem;">
+                    <strong>Simple:</strong> Click EVADE when red dot gets close
+                </p>
                 <ul class="task-list">
-                    <li>Red enemy dot moves toward you on the minimap</li>
-                    <li>Watch the minimap in the top-left corner</li>
-                    <li>When enemy enters the blue detection range</li>
-                    <li>Click the EVADE button to teleport enemy away</li>
-                    <li>If enemy reaches you, it is game over!</li>
+                    <li>Watch the small map in top-left corner</li>
+                    <li>Red dot moves toward you</li>
+                    <li>When it enters the blue circle, click EVADE</li>
+                    <li>If it reaches you, game over!</li>
                 </ul>
             </div>
         </div>
 
         <section class="warning-section">
-            <h2 class="warning-section-title scoring">🏆 Scoring System</h2>
+            <h2 class="warning-section-title scoring">🏆 How You Score Points</h2>
+            <p style="color: #cbd5e1; margin-bottom: 1.5rem; font-size: 1rem;">
+                Here's how you earn points and what to avoid:
+            </p>
             <div class="scoring-grid">
                 <div class="scoring-item correct">
                     <span class="scoring-icon">✓</span>
-                    <span class="scoring-text">Correct number: <span class="scoring-value">+10 points</span></span>
+                    <span class="scoring-text">Right number: <span class="scoring-value">+10 points</span></span>
                 </div>
                 <div class="scoring-item bonus">
                     <span class="scoring-icon">★</span>
-                    <span class="scoring-text">Complete sequence: <span class="scoring-value">+50 bonus</span></span>
+                    <span class="scoring-text">Complete 1-5 set: <span class="scoring-value">+50 bonus</span></span>
                 </div>
                 <div class="scoring-item miss">
                     <span class="scoring-icon">✗</span>
@@ -569,28 +840,29 @@
         </section>
 
         <section class="warning-section">
-            <h2 class="warning-section-title preparation">⚠️ Important Preparation</h2>
+            <h2 class="warning-section-title preparation">📱 Before You Start</h2>
+            
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="color: #ef4444; margin-bottom: 1rem; font-size: 1.2rem;">⚠️ Important!</h3>
+                <p style="color: #cbd5e1; margin: 0; font-size: 1rem;">
+                    <strong>Turn your phone sideways (landscape mode)</strong> - the game won't work properly in portrait mode!
+                </p>
+            </div>
             
             <div class="preparation-grid">
                 <div class="prep-item browser">
-                    <h4>🌐 Browser Recommendation</h4>
-                    <p>Use Google Chrome browser for the best experience and full feature support</p>
-                </div>
-                
-                <div class="prep-item landscape">
-                    <h4>📱 Landscape Mode Required</h4>
-                    <p>This game is designed for LANDSCAPE mode only for optimal gameplay!</p>
+                    <h4>🌐 Best Browser</h4>
+                    <p>Use Google Chrome for the smoothest experience</p>
                 </div>
                 
                 <div class="prep-item checklist">
-                    <h4>📋 Before Starting Checklist</h4>
+                    <h4>📋 Quick Checklist</h4>
                     <ul class="checklist-list">
-                        <li>✅ Use Google Chrome browser</li>
-                        <li>✅ Rotate your device to landscape mode</li>
-                        <li>✅ Find a comfortable position</li>
-                        <li>✅ Ensure you have good lighting</li>
-                        <li>✅ Minimize distractions</li>
-                        <li>✅ Get ready to focus intensely!</li>
+                        <li>✅ Phone turned sideways</li>
+                        <li>✅ Using Chrome browser</li>
+                        <li>✅ Comfortable position</li>
+                        <li>✅ Good lighting</li>
+                        <li>✅ Ready to have fun!</li>
                     </ul>
                 </div>
             </div>
@@ -599,9 +871,8 @@
         <section class="warning-section">
             <div class="challenge-note">
                 <p>
-                    🧠 <strong>Challenge Level:</strong> This game adapts to your skill level. 
-                    It starts easy but gets progressively more challenging as you improve. 
-                    Do not worry if it feels difficult at first - practice makes perfect!
+                    🎮 <strong>Don't Stress!</strong> The game starts easy and gets harder as you improve. 
+                    Everyone struggles at first - that's normal! Just have fun and do your best.
                 </p>
             </div>
         </section>
@@ -611,7 +882,7 @@
                 ← Back to Dashboard
             </a>
             <a href="{% url 'evade_and_sequence_instructions' %}" class="btn btn-primary">
-                🚀 Continue to Instructions
+                🎮 Let's Play!
             </a>
         </div>
     </div>

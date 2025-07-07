@@ -22,6 +22,7 @@ from .views import (
     evade_and_sequence_instructions_view,
     get_online_status_api,
     debug_online_status_view,
+    rank_status_view,
 )
 
 urlpatterns = [
@@ -47,4 +48,5 @@ urlpatterns = [
     path('api/online-status/', get_online_status_api, name='get_online_status_api'),
     path('api/debug-online-status/', debug_online_status_view, name='debug_online_status'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('rank-status/', rank_status_view, name='rank_status'),
 ] 
