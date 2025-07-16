@@ -445,7 +445,7 @@
                     </td>
                     <td>{{ u.email }}</td>
                     <td>
-                        {% if u.useronlinestatus.is_online %}
+                        {% if u.useronlinestatus and u.useronlinestatus.is_online %}
                             <span class="status-badge status-active">Online</span>
                         {% else %}
                             <span class="status-badge status-inactive">Offline</span>

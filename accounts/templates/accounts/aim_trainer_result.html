@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aim Trainer Result</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            font-family: 'Montserrat', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .result-card {
+            background: rgba(34, 40, 49, 0.98);
+            border-radius: 2rem;
+            box-shadow: 0 8px 32px #000a, 0 2px 8px #00bfff44;
+            padding: 3rem 4rem 2.5rem 4rem;
+            text-align: center;
+            animation: popin 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+            max-width: 95vw;
+        }
+        @keyframes popin {
+            0% { transform: scale(0.7) translateY(60px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .result-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.2rem;
+            display: inline-block;
+            filter: drop-shadow(0 2px 8px #00bfff88);
+        }
+        .result-title {
+            font-size: 2.3rem;
+            font-weight: 700;
+            margin-bottom: 0.7rem;
+            letter-spacing: 1px;
+        }
+        .result-summary {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #b3e5fc;
+            font-weight: 500;
+        }
+        .result-metric {
+            font-size: 1.3rem;
+            margin: 0.7rem 0;
+            background: #222b;
+            border-radius: 0.7em;
+            padding: 0.5em 1.2em;
+            display: inline-block;
+            min-width: 180px;
+        }
+        .result-metric strong {
+            color: #00bfff;
+            font-size: 1.25em;
+        }
+        .result-buttons {
+            margin-top: 2.5rem;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+        }
+        .result-btn {
+            font-size: 1.1rem;
+            padding: 1rem 2.5rem;
+            border-radius: 1em;
+            border: none;
+            background: linear-gradient(90deg,#00bfff,#6a5acd);
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 4px 24px #0008;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            letter-spacing: 1px;
+        }
+        .result-btn:hover {
+            background: linear-gradient(90deg,#6a5acd,#00bfff);
+            transform: scale(1.07);
+        }
+        @media (max-width: 600px) {
+            .result-card { padding: 1.2rem 0.5rem; }
+            .result-metric { min-width: 120px; font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="result-card">
+        <div class="result-icon">🎯</div>
+        <div class="result-title">Aim Trainer Results</div>
+        <div class="result-summary" id="result-summary"></div>
+        <div class="result-metric" id="hits">Hits: <strong></strong></div>
+        <div class="result-metric" id="shots">Shots Fired: <strong></strong></div>
+        <div class="result-metric" id="accuracy">Accuracy: <strong></strong></div>
+        <div class="result-buttons">
+            <a href="/accounts/aim_trainer/" class="result-btn">Play Again</a>
+            <a href="/accounts/dashboard/" class="result-btn">Back to Menu</a>
+        </div>
+    </div>
+    <script>
+        function getQueryParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+        const hits = getQueryParam('hits') || 0;
+        const shots = getQueryParam('shots') || 0;
+        const accuracy = getQueryParam('accuracy') || 0;
+        document.getElementById('hits').querySelector('strong').textContent = hits;
+        document.getElementById('shots').querySelector('strong').textContent = shots;
+        document.getElementById('accuracy').querySelector('strong').textContent = accuracy + '%';
+        // Show a summary message based on accuracy
+        let summary = '';
+        const acc = parseInt(accuracy);
+        if (acc >= 90) summary = 'Incredible aim! You are a sharpshooter! 🏆';
+        else if (acc >= 75) summary = 'Great job! Your aim is impressive.';
+        else if (acc >= 50) summary = 'Not bad! Keep practicing to improve.';
+        else if (acc > 0) summary = 'Keep training and you will get better!';
+        else summary = 'Try to hit some targets next time!';
+        document.getElementById('result-summary').textContent = summary;
+    </script>
+</body>
+</html> 

@@ -63,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.UserOnlineStatusMiddleware',
+    'accounts.middleware.BrokenPipeMiddleware',
 ]
 
 ROOT_URLCONF = 'reactiontest.urls'
@@ -150,4 +151,43 @@ CACHES = {
             'MAX_ENTRIES': 1000,
         }
     }
+}
+
+# Server configuration to handle broken pipe errors
+CONN_MAX_AGE = 60  # Keep database connections alive for 60 seconds
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5MB max upload size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5MB max file upload size
+
+# Session configuration
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Logging configuration to handle broken pipe errors gracefully
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
 }

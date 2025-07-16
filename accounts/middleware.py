@@ -1,42 +1,45 @@
-from django.utils import timezone
-from django.contrib.auth.models import User
+import logging
+from django.utils.deprecation import MiddlewareMixin
+from django.http import HttpResponse
+import socket
 from .models import UserOnlineStatus
-from datetime import timedelta
+from django.utils import timezone
 
-class UserOnlineStatusMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
+logger = logging.getLogger(__name__)
 
-    def __call__(self, request):
-        # Process request
-        response = self.get_response(request)
-        
-        # Update online status after response is processed
-        self.update_user_status(request)
-        
+class UserOnlineStatusMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        # Update user's online status
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            try:
+                status, created = UserOnlineStatus.objects.get_or_create(
+                    user=request.user,
+                    defaults={'is_online': True, 'session_key': request.session.session_key}
+                )
+                if not created:
+                    status.is_online = True
+                    status.session_key = request.session.session_key
+                    status.last_seen = timezone.now()
+                    status.save()
+            except Exception as e:
+                logger.error(f"Error updating user online status: {e}")
+
+    def process_response(self, request, response):
         return response
-    
-    def update_user_status(self, request):
-        if request.user.is_authenticated:
-            # Get or create user status
-            status, created = UserOnlineStatus.objects.get_or_create(
-                user=request.user,
-                defaults={
-                    'is_online': True,
-                    'session_key': request.session.session_key
-                }
-            )
-            
-            if not created:
-                # Update existing status
-                status.is_online = True
-                status.last_seen = timezone.now()
-                status.session_key = request.session.session_key
-                status.save()
-        
-        # Clean up old offline users (every 5 minutes)
-        five_minutes_ago = timezone.now() - timedelta(minutes=5)
-        UserOnlineStatus.objects.filter(
-            last_seen__lt=five_minutes_ago,
-            is_online=True
-        ).update(is_online=False) 
+
+class BrokenPipeMiddleware(MiddlewareMixin):
+    """
+    Middleware to handle broken pipe errors gracefully.
+    """
+    def process_request(self, request):
+        return None
+
+    def process_response(self, request, response):
+        return response
+
+    def process_exception(self, request, exception):
+        # Handle broken pipe errors
+        if isinstance(exception, (socket.error, ConnectionResetError, BrokenPipeError)):
+            logger.warning(f"Broken pipe error handled gracefully: {exception}")
+            return HttpResponse(b"Connection closed", status=499)  # Client Closed Request
+        return None 

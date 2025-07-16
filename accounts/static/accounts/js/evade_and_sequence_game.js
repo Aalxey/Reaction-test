@@ -29,6 +29,7 @@
         this.goToResultBtn = document.getElementById('go-to-result-btn');
         this.preStartOverlay = document.getElementById('pre-start-overlay');
         this.startImmersiveBtn = document.getElementById('start-immersive-btn');
+        this.startButton = this.startImmersiveBtn;
         
         // Minimap elements
         this.playerDot = document.getElementById('player-dot');
@@ -78,13 +79,13 @@
         this.init();
         this.setupEventListeners();
         console.log('Constructor completed');
+        console.log('Number lifetime set to:', this.difficulty.numberLifetime, 'ms');
     }
     
     init() {
         console.log('init() called');
-        
         // Listen for the immersive start button click
-        this.startImmersiveBtn.addEventListener('click', () => this.enterImmersiveModeAndPrepare());
+        this.startButton.addEventListener('click', () => this.handleStartButtonClick());
         
         // Handle window resize and orientation changes
         window.addEventListener('resize', () => {
@@ -109,52 +110,27 @@
         console.log('Game initialization completed');
     }
 
-    async enterImmersiveModeAndPrepare() {
-        console.log('Entering immersive mode...');
-        
-        // Hide the button immediately to prevent double clicks
-        this.startImmersiveBtn.style.display = 'none';
-
-        try {
-            // --- 1. Request Fullscreen ---
-            if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
-                await document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { /* IE11 */
-                await document.documentElement.msRequestFullscreen();
-            }
-            console.log('Fullscreen requested successfully.');
-
-            // --- 2. Lock to Landscape Orientation ---
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape');
-                console.log('Screen orientation locked to landscape.');
-            }
-
-            // --- 3. Hide Overlay and Start Countdown ---
-            if (this.preStartOverlay) {
-                this.preStartOverlay.style.opacity = '0';
-                setTimeout(() => {
-                    this.preStartOverlay.style.display = 'none';
-                }, 500); // Wait for transition
-            }
-
-            // --- 4. Show Preparation Screen (Countdown) ---
-            console.log('Showing preparation screen...');
-            this.showPreparationScreen();
-
-        } catch (error) {
-            console.error('Failed to enter immersive mode:', error);
-            // If immersive mode fails, hide the overlay and start the game anyway
-            if (this.preStartOverlay) {
-                this.preStartOverlay.style.display = 'none';
-            }
-            this.showPreparationScreen();
+    handleStartButtonClick() {
+        // Hide pre-start overlay if present
+        if (this.preStartOverlay) {
+            this.preStartOverlay.style.display = 'none';
         }
+        // Hide start button
+        this.startButton.style.display = 'none';
+        // Start the countdown overlay
+        this.showPreparationScreen();
+        // Start fullscreen/orientation in parallel, but don't block countdown
+        setTimeout(() => {
+            this.tryEnterImmersiveMode();
+        }, 100);
     }
 
     showPreparationScreen() {
+        console.log('showPreparationScreen called'); // DEBUG
+        // Remove any existing countdown overlay
+        const oldOverlay = document.getElementById('countdown-overlay');
+        if (oldOverlay) oldOverlay.remove();
+
         // Create countdown overlay directly on game screen
         const countdownOverlay = document.createElement('div');
         countdownOverlay.id = 'countdown-overlay';
@@ -176,11 +152,9 @@
             <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #a7b3d9; max-width: 500px;">
                 The game is about to begin. Focus on the minimap and numbers!
             </p>
-            
-            <div id="countdown-display" style="font-size: 8rem; font-weight: 900; color: #facc15; margin: 2rem 0; min-height: 10rem; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 30px rgba(250, 204, 21, 0.8);">
-                3
+            <div id="countdown-display-wrapper" style="height: 10rem; display: flex; align-items: center; justify-content: center;">
+                <span id="countdown-display" style="font-size: 8rem; font-weight: 900; color: #facc15; display: block; min-width: 8rem; text-shadow: 0 0 30px rgba(250, 204, 21, 0.8);"></span>
             </div>
-            
             <div style="background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border: 1px solid rgba(255, 255, 255, 0.1); max-width: 400px;">
                 <h3 style="color: #3b82f6; margin-bottom: 1rem;">🎯 Quick Reminder</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
@@ -194,45 +168,90 @@
                     </div>
                 </div>
             </div>
-            
             <p style="color: #a7b3d9; font-size: 1rem; margin-top: 1rem;">
                 Game starts in <span id="countdown-text">3</span> seconds...
             </p>
         `;
 
         this.gameContainer.appendChild(countdownOverlay);
-
-        // Start countdown
         let countdown = 3;
         const countdownDisplay = document.getElementById('countdown-display');
         const countdownText = document.getElementById('countdown-text');
+        const displayWrapper = document.getElementById('countdown-display-wrapper');
 
+        // Helper to update the display
+        function showNumber(num) {
+            countdownDisplay.textContent = num;
+            countdownDisplay.style.color = '#facc15';
+            countdownDisplay.style.textShadow = '0 0 30px rgba(250, 204, 21, 0.8)';
+            countdownDisplay.style.animation = 'none';
+            countdownDisplay.offsetHeight; // Force reflow
+            countdownDisplay.style.animation = 'countdown-pulse 1s ease-in-out, countdown-glow 1s ease-in-out';
+        }
+        function showGo() {
+            countdownDisplay.textContent = 'GO!';
+            countdownDisplay.style.color = '#22c55e';
+            countdownDisplay.style.textShadow = '0 0 30px rgba(34, 197, 94, 0.8)';
+            countdownDisplay.style.animation = 'none';
+            countdownDisplay.offsetHeight;
+            countdownDisplay.style.animation = 'go-glow 1s ease-in-out';
+        }
+
+        // Start with 3
+        showNumber(countdown);
+        countdownText.textContent = countdown;
+
+        console.log('Starting countdown interval...'); // DEBUG
+        const finishCountdownAndStartGame = () => {
+            countdownOverlay.style.opacity = '0';
+            setTimeout(() => {
+                countdownOverlay.remove();
+                this.startGame();
+            }, 500);
+        };
+        countdownOverlay.style.transition = 'opacity 0.5s';
         const countdownInterval = setInterval(() => {
             countdown--;
-            
+            console.log('Countdown tick:', countdown); // DEBUG
             if (countdown > 0) {
-                countdownDisplay.textContent = countdown;
+                showNumber(countdown);
                 countdownText.textContent = countdown;
-                
-                // Add enhanced pulse animation
-                countdownDisplay.style.animation = 'none';
-                setTimeout(() => {
-                    countdownDisplay.style.animation = 'countdown-pulse 1s ease-in-out infinite, countdown-glow 1s ease-in-out infinite';
-                }, 10);
             } else {
                 clearInterval(countdownInterval);
-                countdownDisplay.textContent = 'GO!';
-                countdownDisplay.style.color = '#22c55e';
-                countdownDisplay.style.animation = 'go-glow 1s ease-in-out infinite';
-
-                
-                // Start game after a short delay
-                setTimeout(() => {
-                    countdownOverlay.remove();
-                    this.startGame();
-                }, 1000);
+                showGo();
+                countdownText.textContent = 'GO!';
+                setTimeout(finishCountdownAndStartGame, 1000);
             }
         }, 1000);
+    }
+
+    tryEnterImmersiveMode() {
+        // Use Promise.resolve().then() to make it non-blocking
+        Promise.resolve().then(async () => {
+            try {
+                // 1. Request Fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    await document.documentElement.msRequestFullscreen();
+                }
+                console.log('Fullscreen requested successfully.');
+                
+                // 2. Lock to Landscape Orientation
+                if (screen.orientation && screen.orientation.lock) {
+                    try {
+                        await screen.orientation.lock('landscape');
+                        console.log('Screen orientation locked to landscape.');
+                    } catch (err) {
+                        console.warn('Orientation lock failed or not supported:', err);
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to enter immersive mode:', error);
+            }
+        });
     }
 
     startGame() {
@@ -267,7 +286,7 @@
         this.startEnemyMovement();
         
         // Initial call to update highlights
-        this.updateNumberHighlights();
+        this.updateAllNumberHighlights();
         
         console.log('Game started successfully');
     }
@@ -351,7 +370,7 @@
             const enemyRadius = enemyDot.offsetWidth ? enemyDot.offsetWidth / 2 : 10;
             const collisionDistance = playerRadius + enemyRadius;
             
-            if (distance < collisionDistance) {
+            if (distance <= collisionDistance) {
                 this.gameOver('Enemy caught you!');
             }
             
@@ -450,10 +469,42 @@
         number.style.top = position.y + 'px';
         number.addEventListener('click', () => this.handleNumberClick(number));
         this.gameArea.appendChild(number);
+
+        // Only apply shrinking to the active (yellow) number
+        const isActive = (numberValue === this.expectedNumbers[this.currentSequenceIndex]);
+        let shrinkInterval = null;
+        let startTime = null;
+        if (isActive) {
+            startTime = Date.now();
+            const lifetime = this.difficulty.numberLifetime;
+            shrinkInterval = setInterval(() => {
+                if (!this.gameActive || this.gamePaused) {
+                    clearInterval(shrinkInterval);
+                    return;
+                }
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / lifetime;
+                if (progress >= 1) {
+                    clearInterval(shrinkInterval);
+                    this.handleNumberTimeout(number);
+                } else {
+                    const scale = 1 - (progress * 0.7);
+                    number.style.transform = `scale(${scale})`;
+                    if (progress > 0.8) {
+                        const fadeProgress = (progress - 0.8) / 0.2;
+                        const opacity = 1 - fadeProgress;
+                        number.style.opacity = opacity;
+                    }
+                }
+            }, 50);
+        }
+
         this.activeNumbers.push({
             element: number,
             position: position,
-            value: numberValue
+            value: numberValue,
+            shrinkInterval: shrinkInterval,
+            startTime: startTime
         });
         this.updateUI();
     }
@@ -565,12 +616,20 @@
     
     updateNumberHighlight(numberElement) {
         const value = parseInt(numberElement.dataset.value);
+        // Store current transform to preserve shrinking animation
+        const currentTransform = numberElement.style.transform;
+        
         if (value === this.expectedNumbers[this.currentSequenceIndex]) {
             numberElement.style.border = '4px solid #facc15';
             numberElement.style.boxShadow = '0 0 20px rgba(250, 204, 21, 0.8)';
         } else {
             numberElement.style.border = '4px solid rgba(255,255,255,0.5)';
             numberElement.style.boxShadow = '0 0 20px rgba(255,255,255,0.5)';
+        }
+        
+        // Restore the transform to maintain shrinking animation
+        if (currentTransform) {
+            numberElement.style.transform = currentTransform;
         }
     }
 
@@ -580,32 +639,53 @@
         });
     }
 
+    // When the player clicks the correct number, move the shrinking effect to the next active number
     handleNumberClick(number) {
-        if (this.gamePaused) return;
-        const clickedValue = parseInt(number.dataset.value);
-        if (number.style.opacity === '0') return;
-        if (clickedValue === this.expectedNumbers[this.currentSequenceIndex]) {
-            this.score += 10;
+        if (!this.gameActive || this.gamePaused) return;
+        const value = parseInt(number.dataset.value);
+        if (value === this.expectedNumbers[this.currentSequenceIndex]) {
+            // Correct click
+            this.score++;
             this.currentSequenceIndex++;
-            this.difficulty.consecutiveCorrect++;
-            this.difficulty.consecutiveMisses = 0;
-            number.style.transform = 'scale(0)';
-            number.style.opacity = '0';
+            this.updateAllNumberHighlights(); // Ensure yellow ring shifts to new active number
             this.removeFromActiveNumbers(number);
-            setTimeout(() => {
-                if (number.parentNode) number.remove();
-                // Do not respawn the clicked number
-                if (this.activeNumbers.length === 0) {
-                    this.score += 50;
-                    this.spawnNumberSet();
-                }
-            }, 300);
-            this.updateAllNumberHighlights();
+            number.remove();
+            this.updateUI();
+            // Start shrinking the next active number
+            const nextValue = this.expectedNumbers[this.currentSequenceIndex];
+            const nextActive = this.activeNumbers.find(n => n.value === nextValue);
+            if (nextActive && !nextActive.shrinkInterval) {
+                nextActive.startTime = Date.now();
+                const lifetime = this.difficulty.numberLifetime;
+                nextActive.shrinkInterval = setInterval(() => {
+                    if (!this.gameActive || this.gamePaused) {
+                        clearInterval(nextActive.shrinkInterval);
+                        return;
+                    }
+                    const elapsed = Date.now() - nextActive.startTime;
+                    const progress = elapsed / lifetime;
+                    if (progress >= 1) {
+                        clearInterval(nextActive.shrinkInterval);
+                        this.handleNumberTimeout(nextActive.element);
+                    } else {
+                        const scale = 1 - (progress * 0.7);
+                        nextActive.element.style.transform = `scale(${scale})`;
+                        if (progress > 0.8) {
+                            const fadeProgress = (progress - 0.8) / 0.2;
+                            const opacity = 1 - fadeProgress;
+                            nextActive.element.style.opacity = opacity;
+                        }
+                    }
+                }, 50);
+            }
+            // If all numbers are done, spawn a new set
+            if (this.currentSequenceIndex >= this.expectedNumbers.length) {
+                setTimeout(() => this.spawnNumberSet(), 500);
+            }
         } else {
+            // Incorrect click
             this.handleNumberMiss(number);
         }
-        this.adjustDifficulty();
-        this.updateUI();
     }
 
     handleNumberMiss(number) {
@@ -631,9 +711,37 @@
         }
     }
 
+    handleNumberTimeout(number) {
+        console.log('Number timed out:', number.dataset.value);
+        this.misses++;
+        this.gameContainer.classList.add('shake');
+        this.difficulty.consecutiveMisses++;
+        this.difficulty.consecutiveCorrect = 0;
+        number.style.opacity = '0';
+        this.removeFromActiveNumbers(number);
+        setTimeout(() => {
+            if (number.parentNode) number.remove();
+            this.gameContainer.classList.remove('shake');
+            // Do not respawn the timed out number
+            if (this.activeNumbers.length === 0) {
+                this.spawnNumberSet();
+            }
+        }, 300);
+        this.adjustDifficulty();
+        this.updateUI();
+        if (this.misses >= 3) {
+            this.gameOver('Too many misses!');
+        }
+    }
+
     removeFromActiveNumbers(number) {
         const index = this.activeNumbers.findIndex(active => active.element === number);
         if (index !== -1) {
+            // Clear the shrink interval if it exists
+            const activeNumber = this.activeNumbers[index];
+            if (activeNumber.shrinkInterval) {
+                clearInterval(activeNumber.shrinkInterval);
+            }
             this.activeNumbers.splice(index, 1);
         }
     }
@@ -677,6 +785,13 @@
         // Clear intervals
         if (this.enemyMoveInterval) clearInterval(this.enemyMoveInterval);
         if (this.numberSpawnInterval) clearInterval(this.numberSpawnInterval);
+        
+        // Clear all shrink intervals
+        this.activeNumbers.forEach(activeNumber => {
+            if (activeNumber.shrinkInterval) {
+                clearInterval(activeNumber.shrinkInterval);
+            }
+        });
         
         // Remove all numbers from game area and clear active numbers
         this.gameArea.querySelectorAll('.target-number').forEach(num => num.remove());
@@ -901,13 +1016,5 @@
     }
 }
 
-// Initialize game when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing Evade & Sequence game...');
-    try {
-        const game = new EvadeAndSequenceGame();
-        console.log('Game initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize game:', error);
-    }
-});
+// Game initialization is handled in the HTML template
+// This prevents duplicate initialization

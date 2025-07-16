@@ -1,0 +1,204 @@
+/* Aim Trainer Game CSS */
+.overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(20, 20, 40, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.overlay-content {
+    background: #232946;
+    padding: 2rem 2.5rem;
+    border-radius: 18px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+    text-align: center;
+    color: #fff;
+}
+#sensitivity-slider {
+    width: 220px;
+    margin: 1.5rem 0 0.5rem 0;
+}
+#sensitivity-value {
+    display: block;
+    margin-bottom: 1.2rem;
+    font-size: 1.1rem;
+    color: #a259ff;
+}
+#start-game-btn {
+    background: #a259ff;
+    color: #fff;
+    border: none;
+    padding: 0.7rem 2.2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#start-game-btn:hover {
+    background: #8a48e5;
+}
+.game-area {
+    position: relative;
+    width: 100vw;
+    height: 70vh;
+    max-width: 600px;
+    margin: 2rem auto 0 auto;
+    background: #16161a;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+    overflow: hidden;
+}
+#target-container {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 40%;
+    pointer-events: none;
+}
+#target {
+    position: absolute;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle at 60% 40%, #ff4d4d, #a259ff 80%);
+    border-radius: 50%;
+    box-shadow: 0 0 16px #a259ff99;
+    left: 50%; top: 15%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    display: block;
+}
+#hp-bar-container {
+    position: absolute;
+    top: -18px; left: 50%;
+    width: 70px; height: 10px;
+    background: #232946;
+    border-radius: 6px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+#hp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #a259ff, #ff4d4d);
+    border-radius: 6px;
+    transition: width 0.2s;
+    width: 100%;
+}
+#crosshair {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    left: 50%; top: 60%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+#crosshair::before {
+    content: none;
+}
+.crosshair-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #ffe066;
+    border-radius: 50%;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+.crosshair-line {
+    position: absolute;
+    background: #ffe066;
+    border-radius: 2px;
+}
+.crosshair-line.vertical {
+    width: 2px;
+    height: 18px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+}
+.crosshair-line.horizontal {
+    width: 18px;
+    height: 2px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+}
+#joystick-container {
+    position: absolute;
+    left: 24px; bottom: 24px;
+    width: 90px; height: 90px;
+    z-index: 10;
+}
+#joystick-base {
+    position: absolute;
+    width: 90px; height: 90px;
+    background: #232946cc;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #a259ff44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#joystick-thumb {
+    width: 38px; height: 38px;
+    background: #a259ff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #a259ff99;
+    margin: auto;
+    cursor: grab;
+    position: relative;
+}
+#fire-btn {
+    position: absolute;
+    right: 24px; bottom: 24px;
+    background: #ff4d4d;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 70px; height: 70px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    box-shadow: 0 0 12px #ff4d4d55;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s;
+}
+#fire-btn:hover {
+    background: #d7263d;
+}
+#destroyed-message {
+    position: absolute;
+    top: 45%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffe066;
+    font-size: 2.2rem;
+    font-weight: 800;
+    text-shadow: 0 2px 12px #232946cc;
+    z-index: 20;
+}
+@media (max-width: 700px) {
+    .game-area {
+        width: 98vw;
+        height: 60vw;
+        min-height: 320px;
+        max-width: 100vw;
+    }
+    #joystick-container, #fire-btn {
+        width: 60px; height: 60px;
+        left: 12px; right: 12px; bottom: 12px;
+    }
+    #joystick-base, #joystick-thumb {
+        width: 60px; height: 60px;
+    }
+    #crosshair, #target {
+        width: 32px; height: 32px;
+    }
+    #hp-bar-container {
+        width: 40px;
+    }
+} 

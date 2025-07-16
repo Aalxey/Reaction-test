@@ -89,6 +89,7 @@
     <div class="circle-bg left" style="position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); z-index: -1; width: 340px; height: 340px; left: -120px; top: 40px;"></div>
     <div class="circle-bg right" style="position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); z-index: -1; width: 420px; height: 420px; right: -160px; top: 30px;"></div>
 
+    {% block nav %}
     <nav class="nav">
         <a href="{% url 'dashboard' %}" class="nav-left">
             <span style="font-size:1.3rem;">⚡</span> ReactionTest
@@ -102,7 +103,7 @@
             {% endif %}
         </div>
     </nav>
-
+    {% endblock %}
     {% block content %}{% endblock %}
     
     {% block scripts %}{% endblock %}

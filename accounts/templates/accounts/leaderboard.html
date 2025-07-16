@@ -946,6 +946,9 @@
             <div class="game-tab" data-game="evade-sequence">
                 <i class="fas fa-crosshairs"></i> Evade & Sequence
             </div>
+            <div class="game-tab" data-game="aim-trainer">
+                <i class="fas fa-bullseye"></i> Aim Trainer
+            </div>
         </div>
 
         <!-- Time Filter -->
@@ -962,67 +965,7 @@
         </div>
 
         <!-- Progress Section -->
-        {% if user_progress %}
-        <div class="progress-section">
-            <div class="progress-header">
-                <h2>Your Progress This Week</h2>
-                <p>Compare your performance with last week</p>
-            </div>
-            <div class="progress-grid">
-                <!-- Reaction Test Progress -->
-                <div class="progress-card">
-                    <h3><i class="fas fa-bolt"></i> Reaction Test</h3>
-                    <div class="progress-stats">
-                        <div class="progress-stat">
-                            <div class="progress-stat-label">This Week</div>
-                            <div class="progress-stat-value">{{ user_progress.reaction.current_week_best|default:"N/A" }} ms</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-label">Last Week</div>
-                            <div class="progress-stat-value">{{ user_progress.reaction.previous_week_best|default:"N/A" }} ms</div>
-                        </div>
-                    </div>
-                    <div class="progress-improvement {% if user_progress.reaction.is_improved == True %}improved{% elif user_progress.reaction.is_improved == False %}declined{% else %}no-data{% endif %}">
-                        {% if user_progress.reaction.improvement_ms is not None %}
-                            {% if user_progress.reaction.is_improved %}
-                                <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.reaction.improvement_ms }}ms ({{ user_progress.reaction.improvement_percent }}%)
-                            {% else %}
-                                <i class="fas fa-arrow-down"></i> Slower by {{ user_progress.reaction.improvement_ms_abs }}ms ({{ user_progress.reaction.improvement_percent_abs }}%)
-                            {% endif %}
-                        {% else %}
-                            <i class="fas fa-minus"></i> No data available
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Evade & Sequence Progress -->
-                <div class="progress-card">
-                    <h3><i class="fas fa-crosshairs"></i> Evade & Sequence</h3>
-                    <div class="progress-stats">
-                        <div class="progress-stat">
-                            <div class="progress-stat-label">This Week</div>
-                            <div class="progress-stat-value">{{ user_progress.evade.current_week_best|default:"N/A" }}</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-label">Last Week</div>
-                            <div class="progress-stat-value">{{ user_progress.evade.previous_week_best|default:"N/A" }}</div>
-                        </div>
-                    </div>
-                    <div class="progress-improvement {% if user_progress.evade.is_improved == True %}improved{% elif user_progress.evade.is_improved == False %}declined{% else %}no-data{% endif %}">
-                        {% if user_progress.evade.improvement_points is not None %}
-                            {% if user_progress.evade.is_improved %}
-                                <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.evade.improvement_points }} points ({{ user_progress.evade.improvement_percent }}%)
-                            {% else %}
-                                <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.evade.improvement_points_abs }} points ({{ user_progress.evade.improvement_percent_abs }}%)
-                            {% endif %}
-                        {% else %}
-                            <i class="fas fa-minus"></i> No data available
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+        {% comment %} Progress section removed for leaderboard page {% endcomment %}
 
         <!-- Reaction Test Content -->
         <div class="game-content active" id="reaction-test-content">
@@ -1163,6 +1106,81 @@
                                 <td>{{ player.best_score }}</td>
                                 <td>{% if player.timestamp %}{{ player.timestamp|date:'M d, Y h:i A' }}{% else %}-{% endif %}</td>
                             </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aim Trainer Content -->
+        <div class="game-content" id="aim-trainer-content">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value">{{ aim_trainer_stats.current_user_rank|ordinal|default:"N/A" }}</span>
+                    <span class="stat-label">Your Rank</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ aim_trainer_stats.your_best|default:"N/A" }}%</span>
+                    <span class="stat-label">Your Best</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ aim_trainer_stats.total_players|intcomma }}</span>
+                    <span class="stat-label">Total Players</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ aim_trainer_stats.average_accuracy|default:"N/A" }}%</span>
+                    <span class="stat-label">Global Average</span>
+                </div>
+            </div>
+
+            <div class="leaderboard-content">
+                <div class="top-ranks">
+                    {% for player in aim_trainer_leaderboard.top3 %}
+                    <div class="rank-card rank-{{ player.rank }}">
+                        <div class="rank-badge">
+                            {% if player.rank == 1 %}
+                                <i class="fas fa-trophy"></i>
+                            {% elif player.rank == 2 %}
+                                <i class="fas fa-medal"></i>
+                            {% else %}
+                                <i class="fas fa-award"></i>
+                            {% endif %}
+                        </div>
+                        <div class="rank-info">
+                            <h2>{{ player.name }}</h2>
+                            <p>@{{ player.username }}</p>
+                            <div class="time">{{ player.best_accuracy }}%</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="leaderboard-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Best Accuracy</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in aim_trainer_leaderboard.full %}
+                            <tr class="{% if player.user_id == user_id %}current-user-row{% endif %}">
+                                <td>{{ player.rank }}</td>
+                                <td>
+                                    <div class="player-info">
+                                        <span class="player-name">{{ player.name }}</span>
+                                        <span class="player-username">@{{ player.username }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ player.best_accuracy }}%</td>
+                                <td>{% if player.timestamp %}{{ player.timestamp|date:'M d, Y h:i A' }}{% else %}-{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" style="text-align:center;">No results yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

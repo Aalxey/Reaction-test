@@ -74,3 +74,16 @@ class UserOnlineStatus(models.Model):
     
     class Meta:
         verbose_name_plural = "User Online Statuses"
+
+class AimTrainerResult(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    hits = models.IntegerField()
+    shots = models.IntegerField()
+    accuracy = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.hits} hits, {self.accuracy:.1f}% accuracy'
+
+    class Meta:
+        ordering = ['-accuracy', '-hits', '-timestamp']

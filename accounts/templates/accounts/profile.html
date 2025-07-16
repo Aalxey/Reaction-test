@@ -565,19 +565,19 @@
                 <div class="progress-stats">
                     <div class="progress-stat">
                         <div class="progress-stat-label">This Week</div>
-                        <div class="progress-stat-value">{{ user_progress.reaction.current_week_best|default:"N/A" }} ms</div>
+                        <div class="progress-stat-value">{{ user_progress.reaction.current_week_best|floatformat:0|default:"N/A" }} ms</div>
                     </div>
                     <div class="progress-stat">
                         <div class="progress-stat-label">Last Week</div>
-                        <div class="progress-stat-value">{{ user_progress.reaction.previous_week_best|default:"N/A" }} ms</div>
+                        <div class="progress-stat-value">{{ user_progress.reaction.previous_week_best|floatformat:0|default:"N/A" }} ms</div>
                     </div>
                 </div>
                 <div class="progress-improvement {% if user_progress.reaction.is_improved == True %}improved{% elif user_progress.reaction.is_improved == False %}declined{% else %}no-data{% endif %}">
                     {% if user_progress.reaction.improvement_ms is not None %}
                         {% if user_progress.reaction.is_improved %}
-                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.reaction.improvement_ms }}ms ({{ user_progress.reaction.improvement_percent }}%)
+                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.reaction.improvement_ms|floatformat:0 }}ms ({{ user_progress.reaction.improvement_percent }})
                         {% else %}
-                            <i class="fas fa-arrow-down"></i> Slower by {{ user_progress.reaction.improvement_ms_abs }}ms ({{ user_progress.reaction.improvement_percent_abs }}%)
+                            <i class="fas fa-arrow-down"></i> Slower by {{ user_progress.reaction.improvement_ms_abs|floatformat:0 }}ms ({{ user_progress.reaction.improvement_percent_abs }})
                         {% endif %}
                     {% else %}
                         <i class="fas fa-minus"></i> No data available
@@ -591,25 +591,64 @@
                 <div class="progress-stats">
                     <div class="progress-stat">
                         <div class="progress-stat-label">This Week</div>
-                        <div class="progress-stat-value">{{ user_progress.evade.current_week_best|default:"N/A" }}</div>
+                        <div class="progress-stat-value">{{ user_progress.evade.current_week_best|floatformat:0|default:"N/A" }}</div>
                     </div>
                     <div class="progress-stat">
                         <div class="progress-stat-label">Last Week</div>
-                        <div class="progress-stat-value">{{ user_progress.evade.previous_week_best|default:"N/A" }}</div>
+                        <div class="progress-stat-value">{{ user_progress.evade.previous_week_best|floatformat:0|default:"N/A" }}</div>
                     </div>
                 </div>
                 <div class="progress-improvement {% if user_progress.evade.is_improved == True %}improved{% elif user_progress.evade.is_improved == False %}declined{% else %}no-data{% endif %}">
                     {% if user_progress.evade.improvement_points is not None %}
                         {% if user_progress.evade.is_improved %}
-                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.evade.improvement_points }} points ({{ user_progress.evade.improvement_percent }}%)
+                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.evade.improvement_points|floatformat:0 }} points ({{ user_progress.evade.improvement_percent }})
                         {% else %}
-                            <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.evade.improvement_points_abs }} points ({{ user_progress.evade.improvement_percent_abs }}%)
+                            <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.evade.improvement_points_abs|floatformat:0 }} points ({{ user_progress.evade.improvement_percent_abs }})
                         {% endif %}
                     {% else %}
                         <i class="fas fa-minus"></i> No data available
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Aim Trainer Progress -->
+            <div class="progress-card">
+                <h3><i class="fas fa-bullseye"></i> Aim Trainer</h3>
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">This Week</div>
+                        <div class="progress-stat-value">{{ user_progress.aim_trainer.current_week_avg_accuracy|floatformat:1|default:"N/A" }}%</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">Last Week</div>
+                        <div class="progress-stat-value">{{ user_progress.aim_trainer.previous_week_avg_accuracy|floatformat:1|default:"N/A" }}%</div>
+                    </div>
+                </div>
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">Hits (This Week)</div>
+                        <div class="progress-stat-value">{{ user_progress.aim_trainer.current_week_avg_hits|floatformat:0|default:"N/A" }}</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-label">Shots (This Week)</div>
+                        <div class="progress-stat-value">{{ user_progress.aim_trainer.current_week_avg_shots|floatformat:0|default:"N/A" }}</div>
+                    </div>
+                </div>
+                <div class="progress-improvement {% if user_progress.aim_trainer.improvement_accuracy > 0 %}improved{% elif user_progress.aim_trainer.improvement_accuracy == 0 %}no-data{% else %}declined{% endif %}">
+                    {% if user_progress.aim_trainer.improvement_accuracy is not None %}
+                        {% if user_progress.aim_trainer.improvement_accuracy > 0 %}
+                            <i class="fas fa-arrow-up"></i> Improved by {{ user_progress.aim_trainer.improvement_accuracy|floatformat:1 }}%
+                        {% elif user_progress.aim_trainer.improvement_accuracy < 0 %}
+                            <i class="fas fa-arrow-down"></i> Decreased by {{ user_progress.aim_trainer.improvement_accuracy|floatformat:1 }}%
+                        {% else %}
+                            <i class="fas fa-minus"></i> No change
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-minus"></i> No data available
+                    {% endif %}
+                </div>
+            </div>
+            <!-- End Aim Trainer Progress -->
         </div>
     </div>
     {% endif %}
@@ -621,6 +660,9 @@
         </div>
         <div class="game-tab" data-game="evade-sequence">
             🎮 Evade & Sequence
+        </div>
+        <div class="game-tab" data-game="aim-trainer">
+            🎯 Aim Trainer
         </div>
     </div>
 
@@ -719,6 +761,40 @@
                     {% empty %}
                     <tr>
                         <td colspan="2" class="no-results">No evade & sequence results yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Aim Trainer Content -->
+    <div class="game-content" id="aim-trainer-content">
+        <h2 class="section-title">
+            <span class="game-icon">🎯</span>
+            Aim Trainer Stats
+        </h2>
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Hits</th>
+                        <th>Shots</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in aim_trainer_results %}
+                    <tr>
+                        <td>{{ result.timestamp|date:"F d, Y, P" }}</td>
+                        <td>{{ result.hits }}</td>
+                        <td>{{ result.shots }}</td>
+                        <td>{{ result.accuracy|floatformat:1 }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="no-results">No aim trainer results yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

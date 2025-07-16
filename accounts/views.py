@@ -1,15 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from .forms import SignUpForm, LoginForm
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import ReactionTestResult, LoginHistory, EvadeAndSequenceResult, DeviceFingerprint, UserOnlineStatus
+from .models import ReactionTestResult, LoginHistory, EvadeAndSequenceResult, DeviceFingerprint, UserOnlineStatus, AimTrainerResult
 import json
 from django.db import models
-from django.db.models import Avg
+from django.db.models import Avg, F, ExpressionWrapper, FloatField
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
 from django.utils import timezone
@@ -319,365 +319,6 @@ def dashboard_view(request):
     }
     return render(request, 'accounts/dashboard.html', context)
 
-@login_required
-def leaderboard_view(request):
-    # Get time filter from request, default to 'all'
-    time_filter = request.GET.get('time', 'all')
-    
-    # Calculate time thresholds
-    from datetime import datetime, timedelta
-    now = timezone.now()
-    
-    if time_filter == 'day':
-        # Set start_date to midnight of the current day
-        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    elif time_filter == 'week':
-        start_date = now - timedelta(weeks=1)
-    else:  # 'all' or any other value
-        start_date = None
-    
-    # Calculate progress data for current user
-    user_progress = {}
-    if request.user.is_authenticated:
-        # Current week (last 7 days)
-        current_week_start = now - timedelta(weeks=1)
-        # Previous week (7 days before that)
-        previous_week_start = now - timedelta(weeks=2)
-        previous_week_end = current_week_start
-        
-        # Reaction Test Progress
-        current_week_reaction = ReactionTestResult.objects.filter(
-            user=request.user,
-            is_for_leaderboard=True,
-            timestamp__gte=current_week_start
-        ).aggregate(best_time=models.Min('time'))
-        
-        previous_week_reaction = ReactionTestResult.objects.filter(
-            user=request.user,
-            is_for_leaderboard=True,
-            timestamp__gte=previous_week_start,
-            timestamp__lt=previous_week_end
-        ).aggregate(best_time=models.Min('time'))
-        
-        if current_week_reaction['best_time'] and previous_week_reaction['best_time']:
-            reaction_improvement = (previous_week_reaction['best_time'] - current_week_reaction['best_time']) * 1000  # Convert to ms
-            reaction_improvement_percent = ((previous_week_reaction['best_time'] - current_week_reaction['best_time']) / previous_week_reaction['best_time']) * 100
-        else:
-            reaction_improvement = None
-            reaction_improvement_percent = None
-        
-        # Evade & Sequence Progress
-        current_week_evade = EvadeAndSequenceResult.objects.filter(
-            user=request.user,
-            timestamp__gte=current_week_start
-        ).aggregate(best_score=models.Max('score'))
-        
-        previous_week_evade = EvadeAndSequenceResult.objects.filter(
-            user=request.user,
-            timestamp__gte=previous_week_start,
-            timestamp__lt=previous_week_end
-        ).aggregate(best_score=models.Max('score'))
-        
-        if current_week_evade['best_score'] and previous_week_evade['best_score']:
-            evade_improvement = current_week_evade['best_score'] - previous_week_evade['best_score']
-            evade_improvement_percent = ((current_week_evade['best_score'] - previous_week_evade['best_score']) / previous_week_evade['best_score']) * 100
-        else:
-            evade_improvement = None
-            evade_improvement_percent = None
-        
-        user_progress = {
-            'reaction': {
-                'current_week_best': int(current_week_reaction['best_time'] * 1000) if current_week_reaction['best_time'] else None,
-                'previous_week_best': int(previous_week_reaction['best_time'] * 1000) if previous_week_reaction['best_time'] else None,
-                'improvement_ms': int(reaction_improvement) if reaction_improvement else None,
-                'improvement_ms_abs': int(abs(reaction_improvement)) if reaction_improvement else None,
-                'improvement_percent': round(reaction_improvement_percent, 1) if reaction_improvement_percent else None,
-                'improvement_percent_abs': round(abs(reaction_improvement_percent), 1) if reaction_improvement_percent else None,
-                'is_improved': reaction_improvement > 0 if reaction_improvement else None,
-            },
-            'evade': {
-                'current_week_best': current_week_evade['best_score'],
-                'previous_week_best': previous_week_evade['best_score'],
-                'improvement_points': evade_improvement,
-                'improvement_points_abs': abs(evade_improvement) if evade_improvement else None,
-                'improvement_percent': round(evade_improvement_percent, 1) if evade_improvement_percent else None,
-                'improvement_percent_abs': round(abs(evade_improvement_percent), 1) if evade_improvement_percent else None,
-                'is_improved': evade_improvement > 0 if evade_improvement else None,
-            }
-        }
-    
-    # Reaction Test Leaderboard
-    reaction_test_query = ReactionTestResult.objects.filter(is_for_leaderboard=True)
-    if start_date:
-        reaction_test_query = reaction_test_query.filter(timestamp__gte=start_date)
-    
-    reaction_test_best_scores = reaction_test_query.values('user').annotate(
-        best_time=models.Min('time')
-    ).order_by('best_time')
-
-    # Get user details for the top 100
-    reaction_test_top_100_user_ids = [score['user'] for score in reaction_test_best_scores[:100]]
-    reaction_test_users = User.objects.in_bulk(reaction_test_top_100_user_ids)
-
-    reaction_test_leaderboard = []
-    for rank, score in enumerate(reaction_test_best_scores[:100], 1):
-        user = reaction_test_users.get(score['user'])
-        if user:
-            # Find the ReactionTestResult with this user's best_time
-            best_result = ReactionTestResult.objects.filter(user=user, is_for_leaderboard=True, time=score['best_time']).order_by('timestamp').first()
-            reaction_test_leaderboard.append({
-                'rank': rank,
-                'user_id': user.id,
-                'name': f"{user.first_name} {user.last_name}",
-                'username': user.username,
-                'best_time': int(score['best_time'] * 1000),
-                'timestamp': best_result.timestamp if best_result else None,
-            })
-    
-    # Reaction Test stats
-    reaction_test_total_players = User.objects.filter(reactiontestresult__is_for_leaderboard=True).distinct().count()
-    reaction_test_average_time_agg = reaction_test_query.aggregate(models.Avg('time'))
-    reaction_test_average_time = int(reaction_test_average_time_agg['time__avg'] * 1000) if reaction_test_average_time_agg['time__avg'] else None
-
-    # Current user's reaction test rank and best time
-    reaction_test_current_user_rank = None
-    reaction_test_your_best = None
-    if request.user.is_authenticated:
-        user_best_score = reaction_test_best_scores.filter(user=request.user).first()
-        if user_best_score:
-            reaction_test_your_best = int(user_best_score['best_time'] * 1000)
-            # Find rank
-            all_ranked_ids = [score['user'] for score in reaction_test_best_scores]
-            try:
-                reaction_test_current_user_rank = all_ranked_ids.index(request.user.id) + 1
-            except ValueError:
-                reaction_test_current_user_rank = None
-
-    # Reorder top 3 for the podium display [Rank 2, Rank 1, Rank 3]
-    reaction_test_top3_podium = reaction_test_leaderboard[:3]
-    if len(reaction_test_top3_podium) == 3:
-        reaction_test_top3_podium = [reaction_test_top3_podium[1], reaction_test_top3_podium[0], reaction_test_top3_podium[2]]
-
-    # Evade & Sequence Leaderboard
-    evade_sequence_query = EvadeAndSequenceResult.objects.all()
-    if start_date:
-        evade_sequence_query = evade_sequence_query.filter(timestamp__gte=start_date)
-    
-    evade_sequence_best_scores = evade_sequence_query.values('user').annotate(
-        best_score=models.Max('score')
-    ).order_by('-best_score')
-
-    # Get user details for the top 100
-    evade_sequence_top_100_user_ids = [score['user'] for score in evade_sequence_best_scores[:100]]
-    evade_sequence_users = User.objects.in_bulk(evade_sequence_top_100_user_ids)
-
-    evade_sequence_leaderboard = []
-    for rank, score in enumerate(evade_sequence_best_scores[:100], 1):
-        user = evade_sequence_users.get(score['user'])
-        if user:
-            # Find the EvadeAndSequenceResult with this user's best_score
-            best_result = EvadeAndSequenceResult.objects.filter(user=user, score=score['best_score']).order_by('timestamp').first()
-            evade_sequence_leaderboard.append({
-                'rank': rank,
-                'user_id': user.id,
-                'name': f"{user.first_name} {user.last_name}",
-                'username': user.username,
-                'best_score': score['best_score'],
-                'timestamp': best_result.timestamp if best_result else None,
-            })
-    
-    # Evade & Sequence stats
-    evade_sequence_total_players = User.objects.filter(evadeandsequenceresult__isnull=False).distinct().count()
-    evade_sequence_average_score_agg = evade_sequence_query.aggregate(models.Avg('score'))
-    evade_sequence_average_score = int(evade_sequence_average_score_agg['score__avg']) if evade_sequence_average_score_agg['score__avg'] else None
-
-    # Current user's evade & sequence rank and best score
-    evade_sequence_current_user_rank = None
-    evade_sequence_your_best = None
-    if request.user.is_authenticated:
-        user_best_score = evade_sequence_best_scores.filter(user=request.user).first()
-        if user_best_score:
-            evade_sequence_your_best = user_best_score['best_score']
-            # Find rank
-            all_ranked_ids = [score['user'] for score in evade_sequence_best_scores]
-            try:
-                evade_sequence_current_user_rank = all_ranked_ids.index(request.user.id) + 1
-            except ValueError:
-                evade_sequence_current_user_rank = None
-
-    # Reorder top 3 for the podium display [Rank 2, Rank 1, Rank 3]
-    evade_sequence_top3_podium = evade_sequence_leaderboard[:3]
-    if len(evade_sequence_top3_podium) == 3:
-        evade_sequence_top3_podium = [evade_sequence_top3_podium[1], evade_sequence_top3_podium[0], evade_sequence_top3_podium[2]]
-
-    context = {
-        # Time filter
-        'time_filter': time_filter,
-        
-        # User progress
-        'user_progress': user_progress,
-        
-        # Reaction Test data
-        'reaction_test_leaderboard': {
-            'full': reaction_test_leaderboard,
-            'top3': reaction_test_top3_podium,
-        },
-        'reaction_test_stats': {
-            'current_user_rank': reaction_test_current_user_rank,
-            'total_players': reaction_test_total_players,
-            'average_time': reaction_test_average_time,
-            'your_best': reaction_test_your_best,
-        },
-        
-        # Evade & Sequence data
-        'evade_sequence_leaderboard': {
-            'full': evade_sequence_leaderboard,
-            'top3': evade_sequence_top3_podium,
-        },
-        'evade_sequence_stats': {
-            'current_user_rank': evade_sequence_current_user_rank,
-            'total_players': evade_sequence_total_players,
-            'average_score': evade_sequence_average_score,
-            'your_best': evade_sequence_your_best,
-        },
-        
-        'user_id': request.user.id
-    }
-    return render(request, 'accounts/leaderboard.html', context)
-
-@login_required
-def profile_view(request):
-    user = request.user
-    
-    # Calculate progress data for current user
-    from datetime import datetime, timedelta
-    now = timezone.now()
-    
-    # Current week (last 7 days)
-    current_week_start = now - timedelta(weeks=1)
-    # Previous week (7 days before that)
-    previous_week_start = now - timedelta(weeks=2)
-    previous_week_end = current_week_start
-    
-    # Reaction Test Progress
-    current_week_reaction = ReactionTestResult.objects.filter(
-        user=user,
-        is_for_leaderboard=True,
-        timestamp__gte=current_week_start
-    ).aggregate(best_time=models.Min('time'))
-    
-    previous_week_reaction = ReactionTestResult.objects.filter(
-        user=user,
-        is_for_leaderboard=True,
-        timestamp__gte=previous_week_start,
-        timestamp__lt=previous_week_end
-    ).aggregate(best_time=models.Min('time'))
-    
-    if current_week_reaction['best_time'] and previous_week_reaction['best_time']:
-        reaction_improvement = (previous_week_reaction['best_time'] - current_week_reaction['best_time']) * 1000  # Convert to ms
-        reaction_improvement_percent = ((previous_week_reaction['best_time'] - current_week_reaction['best_time']) / previous_week_reaction['best_time']) * 100
-    else:
-        reaction_improvement = None
-        reaction_improvement_percent = None
-    
-    # Evade & Sequence Progress
-    current_week_evade = EvadeAndSequenceResult.objects.filter(
-        user=user,
-        timestamp__gte=current_week_start
-    ).aggregate(best_score=models.Max('score'))
-    
-    previous_week_evade = EvadeAndSequenceResult.objects.filter(
-        user=user,
-        timestamp__gte=previous_week_start,
-        timestamp__lt=previous_week_end
-    ).aggregate(best_score=models.Max('score'))
-    
-    if current_week_evade['best_score'] and previous_week_evade['best_score']:
-        evade_improvement = current_week_evade['best_score'] - previous_week_evade['best_score']
-        evade_improvement_percent = ((current_week_evade['best_score'] - previous_week_evade['best_score']) / previous_week_evade['best_score']) * 100
-    else:
-        evade_improvement = None
-        evade_improvement_percent = None
-    
-    user_progress = {
-        'reaction': {
-            'current_week_best': int(current_week_reaction['best_time'] * 1000) if current_week_reaction['best_time'] else None,
-            'previous_week_best': int(previous_week_reaction['best_time'] * 1000) if previous_week_reaction['best_time'] else None,
-            'improvement_ms': int(reaction_improvement) if reaction_improvement else None,
-            'improvement_ms_abs': int(abs(reaction_improvement)) if reaction_improvement else None,
-            'improvement_percent': round(reaction_improvement_percent, 1) if reaction_improvement_percent else None,
-            'improvement_percent_abs': round(abs(reaction_improvement_percent), 1) if reaction_improvement_percent else None,
-            'is_improved': reaction_improvement > 0 if reaction_improvement else None,
-        },
-        'evade': {
-            'current_week_best': current_week_evade['best_score'],
-            'previous_week_best': previous_week_evade['best_score'],
-            'improvement_points': evade_improvement,
-            'improvement_points_abs': abs(evade_improvement) if evade_improvement else None,
-            'improvement_percent': round(evade_improvement_percent, 1) if evade_improvement_percent else None,
-            'improvement_percent_abs': round(abs(evade_improvement_percent), 1) if evade_improvement_percent else None,
-            'is_improved': evade_improvement > 0 if evade_improvement else None,
-        }
-    }
-    
-    # Reaction Test Results
-    all_reaction_results = ReactionTestResult.objects.filter(user=user)
-    ranked_reaction_results = all_reaction_results.filter(is_for_leaderboard=True)
-    
-    reaction_tests_completed = all_reaction_results.count()
-    reaction_best_time = ranked_reaction_results.order_by('time').first().time * 1000 if ranked_reaction_results.exists() else None
-    reaction_average_time = all_reaction_results.aggregate(models.Avg('time'))['time__avg']
-    if reaction_average_time:
-        reaction_average_time *= 1000
-    
-    # Get recent reaction tests for the table
-    recent_reaction_tests = all_reaction_results.order_by('-timestamp')[:5]
-    
-    # Reaction Test chart data (last 15 tests)
-    reaction_chart_data = all_reaction_results.order_by('timestamp').select_related('user')[:15]
-    reaction_chart_labels = [test.timestamp.strftime("%b %d") for test in reaction_chart_data]
-    reaction_chart_scores = [test.time * 1000 for test in reaction_chart_data]
-    
-    # Evade & Sequence Results
-    all_evade_results = EvadeAndSequenceResult.objects.filter(user=user)
-    
-    evade_games_completed = all_evade_results.count()
-    evade_best_score = all_evade_results.order_by('-score').first().score if all_evade_results.exists() else None
-    evade_average_score = all_evade_results.aggregate(models.Avg('score'))['score__avg']
-    
-    # Get recent evade games for the table
-    recent_evade_games = all_evade_results.order_by('-timestamp')[:5]
-    
-    # Evade & Sequence chart data (last 15 games)
-    evade_chart_data = all_evade_results.order_by('timestamp').select_related('user')[:15]
-    evade_chart_labels = [game.timestamp.strftime("%b %d") for game in evade_chart_data]
-    evade_chart_scores = [game.score for game in evade_chart_data]
-    
-    # Get recent logins
-    recent_logins = LoginHistory.objects.filter(user=user).order_by('-timestamp')[:5]
-
-    context = {
-        'user_progress': user_progress,
-        'reaction_stats': {
-            'tests_completed': reaction_tests_completed,
-            'average_time': int(reaction_average_time) if reaction_average_time else None,
-            'best_time': int(reaction_best_time) if reaction_best_time else None,
-        },
-        'evade_stats': {
-            'games_completed': evade_games_completed,
-            'average_score': int(evade_average_score) if evade_average_score else None,
-            'best_score': evade_best_score,
-        },
-        'recent_reaction_tests': recent_reaction_tests,
-        'recent_evade_games': recent_evade_games,
-        'reaction_chart_labels': json.dumps(reaction_chart_labels),
-        'reaction_chart_scores': json.dumps(reaction_chart_scores),
-        'evade_chart_labels': json.dumps(evade_chart_labels),
-        'evade_chart_scores': json.dumps(evade_chart_scores),
-        'recent_logins': recent_logins,
-    }
-    return render(request, 'accounts/profile.html', context)
-
 def is_staff(user):
     return user.is_staff
 
@@ -754,16 +395,11 @@ def edit_user_view(request, user_id):
     return render(request, 'accounts/edit_user.html', context)
 
 @login_required
-def view_profile_view(request, user_id):
-    try:
-        profile_user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        messages.error(request, 'User not found.')
-        return redirect('admin_dashboard')
-    
+def profile_view(request):
+    user = request.user
     # Get all user's game statistics
-    all_reaction_results = ReactionTestResult.objects.filter(user=profile_user).order_by('-timestamp')
-    all_evade_results = EvadeAndSequenceResult.objects.filter(user=profile_user).order_by('-timestamp')
+    all_reaction_results = ReactionTestResult.objects.filter(user=user).order_by('-timestamp')
+    all_evade_results = EvadeAndSequenceResult.objects.filter(user=user).order_by('-timestamp')
 
     # Last 5 for quick view
     reaction_results = all_reaction_results[:5]
@@ -792,7 +428,7 @@ def view_profile_view(request, user_id):
     evade_chart_scores = [game.score for game in evade_chart_data]
     
     # Recent activity
-    recent_logins = LoginHistory.objects.filter(user=profile_user).order_by('-timestamp')[:5]
+    recent_logins = LoginHistory.objects.filter(user=user).order_by('-timestamp')[:5]
     
     # Calculate improvement over last 7 days vs previous week
     from datetime import timedelta
@@ -806,12 +442,12 @@ def view_profile_view(request, user_id):
     
     # Reaction Test Improvement
     current_week_reaction = ReactionTestResult.objects.filter(
-        user=profile_user,
+        user=user,
         timestamp__gte=current_week_start
     ).aggregate(avg_time=Avg('time'))
     
     previous_week_reaction = ReactionTestResult.objects.filter(
-        user=profile_user,
+        user=user,
         timestamp__gte=previous_week_start,
         timestamp__lt=previous_week_end
     ).aggregate(avg_time=Avg('time'))
@@ -826,12 +462,12 @@ def view_profile_view(request, user_id):
     
     # Evade & Sequence Improvement
     current_week_evade = EvadeAndSequenceResult.objects.filter(
-        user=profile_user,
+        user=user,
         timestamp__gte=current_week_start
     ).aggregate(avg_score=Avg('score'))
     
     previous_week_evade = EvadeAndSequenceResult.objects.filter(
-        user=profile_user,
+        user=user,
         timestamp__gte=previous_week_start,
         timestamp__lt=previous_week_end
     ).aggregate(avg_score=Avg('score'))
@@ -844,8 +480,65 @@ def view_profile_view(request, user_id):
         evade_improvement = improvement_points > 0
         evade_improvement_amount = abs(improvement_points)
     
+    # Aim Trainer Progress (current week vs previous week)
+    aim_trainer_qs = AimTrainerResult.objects.filter(user=user)
+    # Current week
+    current_week_aim = aim_trainer_qs.filter(timestamp__gte=current_week_start)
+    current_week_aim_stats = current_week_aim.aggregate(
+        avg_hits=Avg('hits'),
+        avg_shots=Avg('shots'),
+        avg_accuracy=Avg('accuracy')
+    )
+    # Previous week
+    previous_week_aim = aim_trainer_qs.filter(timestamp__gte=previous_week_start, timestamp__lt=previous_week_end)
+    previous_week_aim_stats = previous_week_aim.aggregate(
+        avg_hits=Avg('hits'),
+        avg_shots=Avg('shots'),
+        avg_accuracy=Avg('accuracy')
+    )
+    # Calculate improvement (accuracy is primary metric)
+    aim_improvement = None
+    aim_improvement_amount = None
+    if current_week_aim_stats['avg_accuracy'] and previous_week_aim_stats['avg_accuracy']:
+        improvement = current_week_aim_stats['avg_accuracy'] - previous_week_aim_stats['avg_accuracy']
+        aim_improvement = improvement > 0
+        aim_improvement_amount = abs(improvement)
+    
+    # Convert reaction test times to ms and round for progress section
+    def ms(val):
+        return int(round(val * 1000)) if val is not None else None
+    user_progress = {
+        'reaction': {
+            'current_week_best': ms(current_week_reaction['avg_time']),
+            'previous_week_best': ms(previous_week_reaction['avg_time']),
+            'is_improved': reaction_improvement,
+            'improvement_ms': int(round(reaction_improvement_amount)) if reaction_improvement_amount is not None else None,
+            'improvement_percent': None,
+            'improvement_ms_abs': int(round(reaction_improvement_amount)) if reaction_improvement_amount is not None else None,
+            'improvement_percent_abs': None,
+        },
+        'evade': {
+            'current_week_best': int(round(current_week_evade['avg_score'])) if current_week_evade['avg_score'] is not None else None,
+            'previous_week_best': int(round(previous_week_evade['avg_score'])) if previous_week_evade['avg_score'] is not None else None,
+            'is_improved': evade_improvement,
+            'improvement_points': int(round(evade_improvement_amount)) if evade_improvement_amount is not None else None,
+            'improvement_percent': None,
+            'improvement_points_abs': int(round(evade_improvement_amount)) if evade_improvement_amount is not None else None,
+            'improvement_percent_abs': None,
+        },
+        'aim_trainer': {
+            'current_week_avg_hits': int(round(current_week_aim_stats['avg_hits'])) if current_week_aim_stats['avg_hits'] is not None else None,
+            'current_week_avg_shots': int(round(current_week_aim_stats['avg_shots'])) if current_week_aim_stats['avg_shots'] is not None else None,
+            'current_week_avg_accuracy': current_week_aim_stats['avg_accuracy'],
+            'previous_week_avg_hits': int(round(previous_week_aim_stats['avg_hits'])) if previous_week_aim_stats['avg_hits'] is not None else None,
+            'previous_week_avg_shots': int(round(previous_week_aim_stats['avg_shots'])) if previous_week_aim_stats['avg_shots'] is not None else None,
+            'previous_week_avg_accuracy': previous_week_aim_stats['avg_accuracy'],
+            'improvement_accuracy': aim_improvement_amount,
+            'is_improved': aim_improvement if aim_improvement is not None else None,
+        }
+    }
     context = {
-        'profile_user': profile_user,
+        'profile_user': user,
         'reaction_results': reaction_results,
         'evade_results': evade_results,
         'all_reaction_results': all_reaction_results,
@@ -861,16 +554,170 @@ def view_profile_view(request, user_id):
         'reaction_chart_scores': json.dumps(reaction_chart_scores),
         'evade_chart_labels': json.dumps(evade_chart_labels),
         'evade_chart_scores': json.dumps(evade_chart_scores),
-        'reaction_improvement': reaction_improvement,
-        'reaction_improvement_amount': reaction_improvement_amount,
-        'evade_improvement': evade_improvement,
-        'evade_improvement_amount': evade_improvement_amount,
-        'current_week_reaction_avg': current_week_reaction['avg_time'],
-        'previous_week_reaction_avg': previous_week_reaction['avg_time'],
-        'current_week_evade_avg': current_week_evade['avg_score'],
-        'previous_week_evade_avg': previous_week_evade['avg_score'],
+        'user_progress': user_progress,
     }
-    return render(request, 'accounts/view_profile.html', context)
+    return render(request, 'accounts/profile.html', context)
+
+@login_required
+def view_profile_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    # Get all user's game statistics
+    all_reaction_results = ReactionTestResult.objects.filter(user=user).order_by('-timestamp')
+    all_evade_results = EvadeAndSequenceResult.objects.filter(user=user).order_by('-timestamp')
+
+    # Last 5 for quick view
+    reaction_results = all_reaction_results[:5]
+    evade_results = all_evade_results[:5]
+    
+    # Calculate statistics
+    total_reaction_tests = all_reaction_results.count()
+    total_evade_games = all_evade_results.count()
+    
+    # Best scores
+    best_reaction = all_reaction_results.order_by('time').first()
+    best_evade = all_evade_results.order_by('-score').first()
+    
+    # Average scores
+    avg_reaction_time = all_reaction_results.aggregate(avg_time=Avg('time'))['avg_time']
+    avg_evade_score = all_evade_results.aggregate(avg_score=Avg('score'))['avg_score']
+    
+    # Chart data for reaction tests (last 15 tests)
+    reaction_chart_data = all_reaction_results.order_by('timestamp')[:15]
+    reaction_chart_labels = [test.timestamp.strftime("%b %d") for test in reaction_chart_data]
+    reaction_chart_scores = [test.time * 1000 for test in reaction_chart_data]
+    
+    # Chart data for evade games (last 15 games)
+    evade_chart_data = all_evade_results.order_by('timestamp')[:15]
+    evade_chart_labels = [game.timestamp.strftime("%b %d") for game in evade_chart_data]
+    evade_chart_scores = [game.score for game in evade_chart_data]
+    
+    # Recent activity
+    recent_logins = LoginHistory.objects.filter(user=user).order_by('-timestamp')[:5]
+    
+    # Calculate improvement over last 7 days vs previous week
+    from datetime import timedelta
+    now = timezone.now()
+    
+    # Current week (last 7 days)
+    current_week_start = now - timedelta(days=7)
+    # Previous week (7 days before that)
+    previous_week_start = now - timedelta(days=14)
+    previous_week_end = current_week_start
+    
+    # Reaction Test Improvement
+    current_week_reaction = ReactionTestResult.objects.filter(
+        user=user,
+        timestamp__gte=current_week_start
+    ).aggregate(avg_time=Avg('time'))
+    
+    previous_week_reaction = ReactionTestResult.objects.filter(
+        user=user,
+        timestamp__gte=previous_week_start,
+        timestamp__lt=previous_week_end
+    ).aggregate(avg_time=Avg('time'))
+    
+    reaction_improvement = None
+    reaction_improvement_amount = None
+    if current_week_reaction['avg_time'] and previous_week_reaction['avg_time']:
+        # Lower time is better for reaction test
+        improvement_ms = (previous_week_reaction['avg_time'] - current_week_reaction['avg_time']) * 1000
+        reaction_improvement = improvement_ms > 0
+        reaction_improvement_amount = abs(improvement_ms)
+    
+    # Evade & Sequence Improvement
+    current_week_evade = EvadeAndSequenceResult.objects.filter(
+        user=user,
+        timestamp__gte=current_week_start
+    ).aggregate(avg_score=Avg('score'))
+    
+    previous_week_evade = EvadeAndSequenceResult.objects.filter(
+        user=user,
+        timestamp__gte=previous_week_start,
+        timestamp__lt=previous_week_end
+    ).aggregate(avg_score=Avg('score'))
+    
+    evade_improvement = None
+    evade_improvement_amount = None
+    if current_week_evade['avg_score'] and previous_week_evade['avg_score']:
+        # Higher score is better for evade & sequence
+        improvement_points = current_week_evade['avg_score'] - previous_week_evade['avg_score']
+        evade_improvement = improvement_points > 0
+        evade_improvement_amount = abs(improvement_points)
+    
+    # Aim Trainer Progress (current week vs previous week)
+    aim_trainer_qs = AimTrainerResult.objects.filter(user=user)
+    # Current week
+    current_week_aim = aim_trainer_qs.filter(timestamp__gte=current_week_start)
+    current_week_aim_stats = current_week_aim.aggregate(
+        avg_hits=Avg('hits'),
+        avg_shots=Avg('shots'),
+        avg_accuracy=Avg('accuracy')
+    )
+    # Previous week
+    previous_week_aim = aim_trainer_qs.filter(timestamp__gte=previous_week_start, timestamp__lt=previous_week_end)
+    previous_week_aim_stats = previous_week_aim.aggregate(
+        avg_hits=Avg('hits'),
+        avg_shots=Avg('shots'),
+        avg_accuracy=Avg('accuracy')
+    )
+    # Calculate improvement (accuracy is primary metric)
+    aim_improvement = None
+    aim_improvement_amount = None
+    if current_week_aim_stats['avg_accuracy'] and previous_week_aim_stats['avg_accuracy']:
+        improvement = current_week_aim_stats['avg_accuracy'] - previous_week_aim_stats['avg_accuracy']
+        aim_improvement = improvement > 0
+        aim_improvement_amount = abs(improvement)
+    
+    user_progress = {
+        'reaction': {
+            'current_week_best': current_week_reaction['avg_time'],
+            'previous_week_best': previous_week_reaction['avg_time'],
+            'is_improved': reaction_improvement,
+            'improvement_ms': reaction_improvement_amount,
+            'improvement_percent': None,
+            'improvement_ms_abs': reaction_improvement_amount,
+            'improvement_percent_abs': None,
+        },
+        'evade': {
+            'current_week_best': current_week_evade['avg_score'],
+            'previous_week_best': previous_week_evade['avg_score'],
+            'is_improved': evade_improvement,
+            'improvement_points': evade_improvement_amount,
+            'improvement_percent': None,
+            'improvement_points_abs': evade_improvement_amount,
+            'improvement_percent_abs': None,
+        },
+        'aim_trainer': {
+            'current_week_avg_hits': current_week_aim_stats['avg_hits'],
+            'current_week_avg_shots': current_week_aim_stats['avg_shots'],
+            'current_week_avg_accuracy': current_week_aim_stats['avg_accuracy'],
+            'previous_week_avg_hits': previous_week_aim_stats['avg_hits'],
+            'previous_week_avg_shots': previous_week_aim_stats['avg_shots'],
+            'previous_week_avg_accuracy': previous_week_aim_stats['avg_accuracy'],
+            'improvement_accuracy': aim_improvement_amount,
+            'is_improved': aim_improvement if aim_improvement is not None else None,
+        }
+    }
+    context = {
+        'profile_user': user,
+        'reaction_results': reaction_results,
+        'evade_results': evade_results,
+        'all_reaction_results': all_reaction_results,
+        'all_evade_results': all_evade_results,
+        'total_reaction_tests': total_reaction_tests,
+        'total_evade_games': total_evade_games,
+        'best_reaction': best_reaction,
+        'best_evade': best_evade,
+        'avg_reaction_time': avg_reaction_time,
+        'avg_evade_score': avg_evade_score,
+        'recent_logins': recent_logins,
+        'reaction_chart_labels': json.dumps(reaction_chart_labels),
+        'reaction_chart_scores': json.dumps(reaction_chart_scores),
+        'evade_chart_labels': json.dumps(evade_chart_labels),
+        'evade_chart_scores': json.dumps(evade_chart_scores),
+        'user_progress': user_progress,
+    }
+    return render(request, 'accounts/profile.html', context)
 
 @login_required
 def reaction_test_view(request):
@@ -1257,3 +1104,356 @@ def rank_status_view(request):
         'time_until_next_ranked': time_until_next_ranked,
     }
     return render(request, 'accounts/rank_status.html', context)
+
+@login_required
+def aim_trainer_view(request):
+    """View for the Aim Trainer game (crosshair, joystick, fire button, moving target)"""
+    return render(request, 'accounts/aim_trainer.html')
+
+@login_required
+def aim_trainer_sensitivity_view(request):
+    """View for adjusting aim trainer sensitivity setting."""
+    return render(request, 'accounts/aim_trainer_sensitivity.html')
+
+def aim_trainer_result_view(request):
+    return render(request, 'accounts/aim_trainer_result.html')
+
+def save_aim_trainer_result(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            hits = int(request.POST.get('hits', 0))
+            shots = int(request.POST.get('shots', 0))
+            accuracy = float(request.POST.get('accuracy', 0))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest('Invalid data')
+        AimTrainerResult.objects.create(user=request.user, hits=hits, shots=shots, accuracy=accuracy)
+        return JsonResponse({'status': 'ok'})
+    return HttpResponseBadRequest('Invalid request')
+
+@login_required
+def leaderboard_view(request):
+    # Get time filter from request, default to 'all'
+    time_filter = request.GET.get('time', 'all')
+    
+    # Calculate time thresholds
+    from datetime import datetime, timedelta
+    now = timezone.now()
+    
+    if time_filter == 'day':
+        # Set start_date to midnight of the current day
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif time_filter == 'week':
+        start_date = now - timedelta(weeks=1)
+    else:  # 'all' or any other value
+        start_date = None
+    
+    # Calculate progress data for current user
+    user_progress = {}
+    if request.user.is_authenticated:
+        # Current week (last 7 days)
+        current_week_start = now - timedelta(weeks=1)
+        # Previous week (7 days before that)
+        previous_week_start = now - timedelta(weeks=2)
+        previous_week_end = current_week_start
+        
+        # Reaction Test Progress
+        current_week_reaction = ReactionTestResult.objects.filter(
+            user=request.user,
+            is_for_leaderboard=True,
+            timestamp__gte=current_week_start
+        ).aggregate(best_time=Avg('time'))
+        
+        previous_week_reaction = ReactionTestResult.objects.filter(
+            user=request.user,
+            is_for_leaderboard=True,
+            timestamp__gte=previous_week_start,
+            timestamp__lt=previous_week_end
+        ).aggregate(best_time=Avg('time'))
+        
+        if current_week_reaction['best_time'] and previous_week_reaction['best_time']:
+            reaction_improvement = (previous_week_reaction['best_time'] - current_week_reaction['best_time']) * 1000  # Convert to ms
+            reaction_improvement_percent = ((previous_week_reaction['best_time'] - current_week_reaction['best_time']) / previous_week_reaction['best_time']) * 100
+        else:
+            reaction_improvement = None
+            reaction_improvement_percent = None
+        
+        # Evade & Sequence Progress
+        current_week_evade = EvadeAndSequenceResult.objects.filter(
+            user=request.user,
+            timestamp__gte=current_week_start
+        ).aggregate(best_score=Avg('score'))
+        
+        previous_week_evade = EvadeAndSequenceResult.objects.filter(
+            user=request.user,
+            timestamp__gte=previous_week_start,
+            timestamp__lt=previous_week_end
+        ).aggregate(best_score=Avg('score'))
+        
+        if current_week_evade['best_score'] and previous_week_evade['best_score']:
+            evade_improvement = current_week_evade['best_score'] - previous_week_evade['best_score']
+            evade_improvement_percent = ((current_week_evade['best_score'] - previous_week_evade['best_score']) / previous_week_evade['best_score']) * 100
+        else:
+            evade_improvement = None
+            evade_improvement_percent = None
+        
+        user_progress = {
+            'reaction': {
+                'current_week_best': int(current_week_reaction['best_time'] * 1000) if current_week_reaction['best_time'] else None,
+                'previous_week_best': int(previous_week_reaction['best_time'] * 1000) if previous_week_reaction['best_time'] else None,
+                'improvement_ms': int(reaction_improvement) if reaction_improvement else None,
+                'improvement_ms_abs': int(abs(reaction_improvement)) if reaction_improvement else None,
+                'improvement_percent': round(reaction_improvement_percent, 1) if reaction_improvement_percent else None,
+                'improvement_percent_abs': round(abs(reaction_improvement_percent), 1) if reaction_improvement_percent else None,
+                'is_improved': reaction_improvement > 0 if reaction_improvement else None,
+            },
+            'evade': {
+                'current_week_best': current_week_evade['best_score'],
+                'previous_week_best': previous_week_evade['best_score'],
+                'improvement_points': evade_improvement,
+                'improvement_points_abs': abs(evade_improvement) if evade_improvement else None,
+                'improvement_percent': round(evade_improvement_percent, 1) if evade_improvement_percent else None,
+                'improvement_percent_abs': round(abs(evade_improvement_percent), 1) if evade_improvement_percent else None,
+                'is_improved': evade_improvement > 0 if evade_improvement else None,
+            }
+        }
+    
+    # Reaction Test Leaderboard
+    reaction_test_query = ReactionTestResult.objects.filter(is_for_leaderboard=True)
+    if start_date:
+        reaction_test_query = reaction_test_query.filter(timestamp__gte=start_date)
+    
+    reaction_test_best_scores = reaction_test_query.values('user').annotate(
+        best_time=Avg('time')
+    ).order_by('best_time')
+
+    # Get user details for the top 100
+    reaction_test_top_100_user_ids = [score['user'] for score in reaction_test_best_scores[:100]]
+    reaction_test_users = User.objects.in_bulk(reaction_test_top_100_user_ids)
+
+    reaction_test_leaderboard = []
+    for rank, score in enumerate(reaction_test_best_scores[:100], 1):
+        user = reaction_test_users.get(score['user'])
+        if user:
+            # Find the ReactionTestResult with this user's best_time
+            best_result = ReactionTestResult.objects.filter(user=user, is_for_leaderboard=True, time=score['best_time']).order_by('timestamp').first()
+            reaction_test_leaderboard.append({
+                'rank': rank,
+                'user_id': user.id,
+                'name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'best_time': int(score['best_time'] * 1000),
+                'timestamp': best_result.timestamp if best_result else None,
+            })
+    
+    # Reaction Test stats
+    reaction_test_total_players = User.objects.filter(reactiontestresult__is_for_leaderboard=True).distinct().count()
+    reaction_test_average_time_agg = reaction_test_query.aggregate(Avg('time'))
+    reaction_test_average_time = int(reaction_test_average_time_agg['time__avg'] * 1000) if reaction_test_average_time_agg['time__avg'] else None
+
+    # Current user's reaction test rank and best time
+    reaction_test_current_user_rank = None
+    reaction_test_your_best = None
+    if request.user.is_authenticated:
+        user_best_score = reaction_test_best_scores.filter(user=request.user).first()
+        if user_best_score:
+            reaction_test_your_best = int(user_best_score['best_time'] * 1000)
+            # Find rank
+            all_ranked_ids = [score['user'] for score in reaction_test_best_scores]
+            try:
+                reaction_test_current_user_rank = all_ranked_ids.index(request.user.id) + 1
+            except ValueError:
+                reaction_test_current_user_rank = None
+
+    # Reorder top 3 for the podium display [Rank 2, Rank 1, Rank 3]
+    reaction_test_top3_podium = reaction_test_leaderboard[:3]
+    if len(reaction_test_top3_podium) == 3:
+        reaction_test_top3_podium = [reaction_test_top3_podium[1], reaction_test_top3_podium[0], reaction_test_top3_podium[2]]
+
+    # Evade & Sequence Leaderboard
+    evade_sequence_query = EvadeAndSequenceResult.objects.all()
+    if start_date:
+        evade_sequence_query = evade_sequence_query.filter(timestamp__gte=start_date)
+    
+    evade_sequence_best_scores = evade_sequence_query.values('user').annotate(
+        best_score=Avg('score')
+    ).order_by('-best_score')
+
+    # Get user details for the top 100
+    evade_sequence_top_100_user_ids = [score['user'] for score in evade_sequence_best_scores[:100]]
+    evade_sequence_users = User.objects.in_bulk(evade_sequence_top_100_user_ids)
+
+    evade_sequence_leaderboard = []
+    for rank, score in enumerate(evade_sequence_best_scores[:100], 1):
+        user = evade_sequence_users.get(score['user'])
+        if user:
+            # Find the EvadeAndSequenceResult with this user's best_score
+            best_result = EvadeAndSequenceResult.objects.filter(user=user, score=score['best_score']).order_by('timestamp').first()
+            evade_sequence_leaderboard.append({
+                'rank': rank,
+                'user_id': user.id,
+                'name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'best_score': score['best_score'],
+                'timestamp': best_result.timestamp if best_result else None,
+            })
+    
+    # Evade & Sequence stats
+    evade_sequence_total_players = User.objects.filter(evadeandsequenceresult__isnull=False).distinct().count()
+    evade_sequence_average_score_agg = evade_sequence_query.aggregate(Avg('score'))
+    evade_sequence_average_score = int(evade_sequence_average_score_agg['score__avg']) if evade_sequence_average_score_agg['score__avg'] else None
+
+    # Current user's evade & sequence rank and best score
+    evade_sequence_current_user_rank = None
+    evade_sequence_your_best = None
+    if request.user.is_authenticated:
+        user_best_score = evade_sequence_best_scores.filter(user=request.user).first()
+        if user_best_score:
+            evade_sequence_your_best = user_best_score['best_score']
+            # Find rank
+            all_ranked_ids = [score['user'] for score in evade_sequence_best_scores]
+            try:
+                evade_sequence_current_user_rank = all_ranked_ids.index(request.user.id) + 1
+            except ValueError:
+                evade_sequence_current_user_rank = None
+
+    # Reorder top 3 for the podium display [Rank 2, Rank 1, Rank 3]
+    evade_sequence_top3_podium = evade_sequence_leaderboard[:3]
+    if len(evade_sequence_top3_podium) == 3:
+        evade_sequence_top3_podium = [evade_sequence_top3_podium[1], evade_sequence_top3_podium[0], evade_sequence_top3_podium[2]]
+
+    # Aim Trainer leaderboard
+    aim_trainer_query = AimTrainerResult.objects.all()
+    if start_date:
+        aim_trainer_query = aim_trainer_query.filter(timestamp__gte=start_date)
+    
+    aim_trainer_best_scores = aim_trainer_query.values('user').annotate(
+        best_accuracy=Avg('accuracy'),
+        best_hits=Avg('hits'),
+        best_shots=Avg('shots')
+    ).order_by('-best_accuracy', '-best_hits', '-best_shots')
+
+    # Get user details for the top 100
+    aim_trainer_top_100_user_ids = [score['user'] for score in aim_trainer_best_scores[:100]]
+    aim_trainer_users = User.objects.in_bulk(aim_trainer_top_100_user_ids)
+
+    aim_trainer_leaderboard = []
+    for rank, score in enumerate(aim_trainer_best_scores[:100], 1):
+        user = aim_trainer_users.get(score['user'])
+        if user:
+            # Find the AimTrainerResult with this user's best accuracy
+            best_result = AimTrainerResult.objects.filter(
+                user=user, 
+                accuracy=score['best_accuracy']
+            ).order_by('-hits', '-timestamp').first()
+            aim_trainer_leaderboard.append({
+                'rank': rank,
+                'user_id': user.id,
+                'name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'best_accuracy': round(score['best_accuracy'], 1),
+                'best_hits': int(round(score['best_hits'])) if score['best_hits'] else 0,
+                'best_shots': int(round(score['best_shots'])) if score['best_shots'] else 0,
+                'timestamp': best_result.timestamp if best_result else None,
+            })
+    
+    # Aim Trainer stats
+    aim_trainer_total_players = User.objects.filter(aimtrainerresult__isnull=False).distinct().count()
+    aim_trainer_average_accuracy_agg = aim_trainer_query.aggregate(Avg('accuracy'))
+    aim_trainer_average_accuracy = round(aim_trainer_average_accuracy_agg['accuracy__avg'], 1) if aim_trainer_average_accuracy_agg['accuracy__avg'] else None
+
+    # Current user's aim trainer rank and best accuracy
+    aim_trainer_current_user_rank = None
+    aim_trainer_your_best = None
+    if request.user.is_authenticated:
+        user_best_score = aim_trainer_best_scores.filter(user=request.user).first()
+        if user_best_score:
+            aim_trainer_your_best = round(user_best_score['best_accuracy'], 1)
+            # Find rank
+            all_ranked_ids = [score['user'] for score in aim_trainer_best_scores]
+            try:
+                aim_trainer_current_user_rank = all_ranked_ids.index(request.user.id) + 1
+            except ValueError:
+                aim_trainer_current_user_rank = None
+
+    # Reorder top 3 for the podium display [Rank 2, Rank 1, Rank 3]
+    aim_trainer_top3_podium = aim_trainer_leaderboard[:3]
+    if len(aim_trainer_top3_podium) == 3:
+        aim_trainer_top3_podium = [aim_trainer_top3_podium[1], aim_trainer_top3_podium[0], aim_trainer_top3_podium[2]]
+
+    # Add Aim Trainer progress to user_progress
+    if request.user.is_authenticated:
+        # Aim Trainer Progress
+        current_week_aim = AimTrainerResult.objects.filter(
+            user=request.user,
+            timestamp__gte=current_week_start
+        ).aggregate(avg_accuracy=Avg('accuracy'))
+        
+        previous_week_aim = AimTrainerResult.objects.filter(
+            user=request.user,
+            timestamp__gte=previous_week_start,
+            timestamp__lt=previous_week_end
+        ).aggregate(avg_accuracy=Avg('accuracy'))
+        
+        if current_week_aim['avg_accuracy'] and previous_week_aim['avg_accuracy']:
+            aim_improvement = current_week_aim['avg_accuracy'] - previous_week_aim['avg_accuracy']
+            aim_improvement_percent = ((current_week_aim['avg_accuracy'] - previous_week_aim['avg_accuracy']) / previous_week_aim['avg_accuracy']) * 100
+        else:
+            aim_improvement = None
+            aim_improvement_percent = None
+        
+        user_progress['aim_trainer'] = {
+            'current_week_best': round(current_week_aim['avg_accuracy'], 1) if current_week_aim['avg_accuracy'] else None,
+            'previous_week_best': round(previous_week_aim['avg_accuracy'], 1) if previous_week_aim['avg_accuracy'] else None,
+            'improvement_accuracy': round(aim_improvement, 1) if aim_improvement else None,
+            'improvement_accuracy_abs': round(abs(aim_improvement), 1) if aim_improvement else None,
+            'improvement_percent': round(aim_improvement_percent, 1) if aim_improvement_percent else None,
+            'improvement_percent_abs': round(abs(aim_improvement_percent), 1) if aim_improvement_percent else None,
+            'is_improved': aim_improvement > 0 if aim_improvement else None,
+        }
+
+    context = {
+        # Time filter
+        'time_filter': time_filter,
+        
+        # User progress
+        'user_progress': user_progress,
+        
+        # Reaction Test data
+        'reaction_test_leaderboard': {
+            'full': reaction_test_leaderboard,
+            'top3': reaction_test_top3_podium,
+        },
+        'reaction_test_stats': {
+            'current_user_rank': reaction_test_current_user_rank,
+            'total_players': reaction_test_total_players,
+            'average_time': reaction_test_average_time,
+            'your_best': reaction_test_your_best,
+        },
+        
+        # Evade & Sequence data
+        'evade_sequence_leaderboard': {
+            'full': evade_sequence_leaderboard,
+            'top3': evade_sequence_top3_podium,
+        },
+        'evade_sequence_stats': {
+            'current_user_rank': evade_sequence_current_user_rank,
+            'total_players': evade_sequence_total_players,
+            'average_score': evade_sequence_average_score,
+            'your_best': evade_sequence_your_best,
+        },
+        
+        # Aim Trainer data
+        'aim_trainer_leaderboard': {
+            'full': aim_trainer_leaderboard,
+            'top3': aim_trainer_top3_podium,
+        },
+        'aim_trainer_stats': {
+            'current_user_rank': aim_trainer_current_user_rank,
+            'total_players': aim_trainer_total_players,
+            'average_accuracy': aim_trainer_average_accuracy,
+            'your_best': aim_trainer_your_best,
+        },
+        
+        'user_id': request.user.id
+    }
+    return render(request, 'accounts/leaderboard.html', context)

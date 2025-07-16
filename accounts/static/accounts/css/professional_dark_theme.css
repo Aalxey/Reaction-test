@@ -46,6 +46,81 @@ h1, h2, h3 {
     font-weight: 600;
 }
 
+/* ===== GAME STYLES ===== */
+
+/* Countdown animations for Evade & Sequence game */
+@keyframes countdown-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes countdown-glow {
+    0%, 100% {
+        text-shadow: 0 0 30px rgba(250, 204, 21, 0.8);
+    }
+    50% {
+        text-shadow: 0 0 50px rgba(250, 204, 21, 1), 0 0 70px rgba(250, 204, 21, 0.6);
+    }
+}
+
+@keyframes go-glow {
+    0%, 100% {
+        text-shadow: 0 0 30px rgba(34, 197, 94, 0.8);
+    }
+    50% {
+        text-shadow: 0 0 50px rgba(34, 197, 94, 1), 0 0 70px rgba(34, 197, 94, 0.6);
+    }
+}
+
+/* Target number styling for Evade & Sequence game */
+.target-number {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    transition: box-shadow 0.2s ease;
+    z-index: 10;
+    transform: scale(1); /* Ensure initial scale is set */
+}
+
+.target-number:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+/* Mobile adjustments for target numbers */
+@media (max-width: 768px) {
+    .target-number {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        border-width: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .target-number {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 
 /* Mobile First Approach */

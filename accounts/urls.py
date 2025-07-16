@@ -5,9 +5,9 @@ from .views import (
     login_view, 
     dashboard_view, 
     leaderboard_view, 
-    profile_view, 
     admin_dashboard_view, 
     edit_user_view,
+    profile_view,
     view_profile_view,
     reaction_test_view,
     save_score_view,
@@ -23,6 +23,10 @@ from .views import (
     get_online_status_api,
     debug_online_status_view,
     rank_status_view,
+    aim_trainer_view,
+    aim_trainer_sensitivity_view,
+    aim_trainer_result_view,
+    save_aim_trainer_result,
 )
 
 urlpatterns = [
@@ -39,7 +43,6 @@ urlpatterns = [
     path('reaction-test/', reaction_test_view, name='reaction_test'),
     path('save-score/', save_score_view, name='save_score'),
     path('reaction-test-result/', reaction_test_result_view, name='reaction_test_result'),
-    path('evade-and-sequence-warning/', evade_and_sequence_warning_view, name='evade_and_sequence_warning'),
     path('evade-and-sequence-instructions/', evade_and_sequence_instructions_view, name='evade_and_sequence_instructions'),
     path('evade-and-sequence/', evade_and_sequence_view, name='evade_and_sequence'),
     path('save-evade-and-sequence-score/', save_evade_and_sequence_score_view, name='save_evade_and_sequence_score'),
@@ -49,4 +52,7 @@ urlpatterns = [
     path('api/debug-online-status/', debug_online_status_view, name='debug_online_status'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('rank-status/', rank_status_view, name='rank_status'),
+    path('aim-trainer/', aim_trainer_view, name='aim_trainer'),
+    path('aim_trainer_result/', aim_trainer_result_view, name='aim_trainer_result'),
+    path('save-aim-trainer-result/', save_aim_trainer_result, name='save_aim_trainer_result'),
 ] 

@@ -1,16 +1,91 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="container" style="max-width: 500px; margin: 3rem auto; background: #1e293b; color: #fff; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.2);">
-    <h2 style="margin-bottom: 1.5rem;">Reaction Test Mode Selection</h2>
+<style>
+.rank-status-container {
+    max-width: 500px;
+    margin: 3rem auto;
+    background: #1e293b;
+    color: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.rank-status-container h2 {
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+.rank-status-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+.rank-status-message {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+.rank-status-btn {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+.btn-success {
+    background: #22c55e;
+}
+.btn-primary {
+    background: #3b82f6;
+}
+@media (max-width: 600px) {
+    .rank-status-container {
+        max-width: 98vw;
+        margin: 1.5rem auto;
+        padding: 1rem;
+        border-radius: 10px;
+    }
+    .rank-status-container h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+    .rank-status-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .rank-status-message {
+        font-size: 1rem;
+        margin-bottom: 1.2rem;
+    }
+    .rank-status-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 1rem;
+        border-radius: 7px;
+        width: 100%;
+        max-width: 300px;
+    }
+}
+@media (max-width: 400px) {
+    .rank-status-container {
+        padding: 0.5rem;
+    }
+    .rank-status-btn {
+        font-size: 0.95rem;
+        padding: 0.5rem 0.7rem;
+    }
+}
+</style>
+<div class="rank-status-container">
+    <h2>Reaction Test Mode Selection</h2>
     {% if can_play_ranked %}
-        <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
-        <p style="font-size: 1.2rem; margin-bottom: 2rem;">Your Ranked Mode is ready. Would you like to proceed?</p>
-        <a href="{% url 'reaction_test' %}" class="btn btn-success" style="padding: 0.75rem 2rem; font-size: 1.1rem; border-radius: 8px; background: #22c55e; color: #fff; text-decoration: none;">Start Ranked Mode</a>
+        <div class="rank-status-icon">✅</div>
+        <p class="rank-status-message">Your Ranked Mode is ready. Would you like to proceed?</p>
+        <a href="{% url 'reaction_test' %}" class="rank-status-btn btn-success">Start Ranked Mode</a>
     {% else %}
-        <div style="font-size: 2rem; margin-bottom: 1rem;">❗</div>
-        <p style="font-size: 1.2rem; margin-bottom: 1rem;">You must wait {{ wait_hours }} hour{{ wait_hours|pluralize }} and {{ wait_minutes }} minute{{ wait_minutes|pluralize }} before your next ranked session.</p>
+        <div class="rank-status-icon">❗</div>
+        <p class="rank-status-message">You must wait {{ wait_hours }} hour{{ wait_hours|pluralize }} and {{ wait_minutes }} minute{{ wait_minutes|pluralize }} before your next ranked session.</p>
         <p style="margin-bottom: 2rem;">If you want to practice, click the button below.</p>
-        <a href="{% url 'reaction_test' %}?practice=1" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem; border-radius: 8px; background: #3b82f6; color: #fff; text-decoration: none;">Proceed to Practice Mode</a>
+        <a href="{% url 'reaction_test' %}?practice=1" class="rank-status-btn btn-primary">Proceed to Practice Mode</a>
     {% endif %}
 </div>
 {% endblock %} 
